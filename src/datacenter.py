@@ -5,6 +5,7 @@ Data Center
 """
 
 import pandas as pd
+import numpy as np
 import os
 import datetime
 import logging
@@ -12,24 +13,52 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DataCenter:
-    
+
+    @staticmethod
+    def get_datapath():
+        paths = dict()
+        paths['data'] = os.path.join(os.environ['HOME'], 'Dropbox/HW/data')
+        paths['marketdata'] = os.path.join(paths['data'], 'marketdata')
+        paths['dailycache'] = os.path.join(paths['marketdata'], 'dailycache')
+        paths['misc'] = os.path.join(paths['marketdata'], 'misc')
+        paths['univ'] = os.path.join(paths['marketdata'], 'univ')
+        return paths
+
+    @staticmethod
+    def get_business_days():
+        paths = DataCenter.get_datapath()
+        business_days = pd.read_csv(os.path.join(paths['misc'],'business_days.csv'),dtype={'date':object})
+        return business_days['date']
+
+    @staticmethod
+    def get_business_days_within(yyyymmdd, nbackward, nforward):
+        dates = DataCenter.get_business_days()
+        pos = np.argmax(dates>yyyymmdd)
+        if pos == 0:
+            logger.warning('Input date outside the range of current business days')
+            pos = len(dates)
+        nforward = min(nforward, len(dates)-pos)
+        return dates[pos-nbackward:pos+nforward]
+        
     def __init__(self, startdate = '20100101', enddate = datetime.date.today().strftime('%Y%m%d')):
         logger.info('Initializing data center')
-        self.maxpath = os.path.join(os.environ['HOME'], 'max')
-        self.datapath = os.path.join(['HOME'], 'Dropbox/HW/data')
-        self.business_days = pd.read_csv(os.path.join(self.datapath,'marketdata/misc/business_days.csv'),dtype={'date':object})
+        paths = self.get_datapath()
+        self.paths = paths
+        self.business_days = self.get_business_days()
         self.price = self.load_daily_price(startdate, enddate)
         self.univ_dict = dict()
-        univ_filenames = os.listdir(os.path.join(self.datapath, 'marketdata/univ'))
+        univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
-            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(self.datapath,'marketdata/univ',fn))
+            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn))
         logger.info('Finish initializing data center')
     
     def load_daily_price(self, startdate, enddate):
         logger.info('Loading daily cache from %s to %s', startdate, enddate)
-        bdays = self.business_days[(self.business_days['date']>=startdate) & (self.business_days['date']<=enddate)]
-        bdays_list = bdays['date'].tolist()
-        filenames = [os.path.join(self.datapath, 'marketdata/dailycache', x[:4], x+'.csv') for x in bdays_list]
+        bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
+        bdays_list = bdays.tolist()
+        filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
         px_list = [pd.read_csv(x) for x in filenames]
-        return pd.concat(px_list)
-        logger.info('Initializing data center')
+        pxcache = pd.concat(px_list)
+        logger.info('Daily cache loaded')
+        return pxcache
+
