@@ -1,8 +1,16 @@
 """
-Get daily price data from tushare
+Get and enrich daily data from tushare
+
+Usage: python cachedaily.py [start-date] [end-date]
 
 @author: jingweiwu
 """
+
+from sys import argv
+
+if len(argv) != 3:
+    raise Exception('Incorrect usage. Please run as\n\t python cachedaily.py [start-date] [end-date]')
+script, startdate, enddate = argv
 
 import sys
 import os
@@ -14,17 +22,12 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(name)s  %(levelname)s  %(message)s')
 
-
 codelist = get_code_list(['sz50', 'hs300', 'zz500'])
 
-startdate = '2017-01-01'
-enddate = '2017-01-10'
-
-dc = DataCenter('20150101', '20150401')
-DataCenter.get_business_days_within('20151231', 3, 5)
-
-px = get_daily_price(codelist[:10], startdate, enddate)
+px = get_daily_price(codelist, startdate, enddate)
 
 px = enrich(px)
+
+save_csv(px)
 
 update_business_days()
