@@ -28,7 +28,7 @@ class DataCenter:
     def get_business_days():
         paths = DataCenter.get_datapath()
         business_days = pd.read_csv(os.path.join(paths['misc'],'business_days.csv'),dtype={'date':object})
-        return business_days['date']
+        return business_days['date'].values
 
     @staticmethod
     def get_business_days_within(yyyymmdd, nbackward, nforward):
@@ -49,7 +49,7 @@ class DataCenter:
         self.univ_dict = dict()
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
-            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn))
+            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':object})
         logger.info('Finish initializing data center')
     
     def load_daily_price(self, startdate, enddate):
@@ -57,7 +57,7 @@ class DataCenter:
         bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
         bdays_list = bdays.tolist()
         filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
-        px_list = [pd.read_csv(x) for x in filenames]
+        px_list = [pd.read_csv(x, dtype={'date':object,'code':object}) for x in filenames]
         pxcache = pd.concat(px_list)
         logger.info('Daily cache loaded')
         return pxcache
