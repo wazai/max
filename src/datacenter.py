@@ -26,6 +26,7 @@ class DataCenter:
 
     @staticmethod
     def get_business_days():
+        logger.info('Loading business days')
         paths = DataCenter.get_datapath()
         business_days = pd.read_csv(os.path.join(paths['misc'],'business_days.csv'),dtype={'date':object})
         return business_days['date'].values
@@ -49,6 +50,7 @@ class DataCenter:
         self.univ_dict = dict()
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
+            logger.info('Load univ file %s', fn)
             self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':object})
         logger.info('Finish initializing data center')
     
