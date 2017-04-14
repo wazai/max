@@ -17,8 +17,8 @@ datapath = DataCenter.get_datapath()
 
 def get_daily_price(codelist, startdate, enddate):
     pxall = pd.DataFrame()
-    for code in codelist:
-        print "loading price for " + code
+    for i, code in enumerate(codelist):
+        logger.info("Downloading price for %s (%i/%i)", code, i+i, len(codelist))
         px = ts.get_k_data(code, start=startdate, end=enddate) #autype='hfq'
         pxall = pxall.append(px)
     return pxall
@@ -48,22 +48,22 @@ def rolling_operation(func, windowlen, col, newcol):
         return dt
     return f
 
-def enrich(px):
+def enrich(pxorig):
     logger.info('Enriching price data')
-    startdate = min(px.date)
-    enddate = max(px.date)
+    startdate = min(pxorig.date)
+    enddate = max(pxorig.date)
     dates = DataCenter.get_business_days_within(startdate, 60, 0)
     dc = DataCenter(dates[0], startdate)
     dc.price = dc.price[dc.price['date'] < startdate]
     univ = pd.concat([dc.univ_dict['sz50'][['code','name']],
                       dc.univ_dict['hs300'][['code','name']],
                       dc.univ_dict['zz500'][['code','name']]], ignore_index=True)
-    px = pd.merge(px, univ, on='code')
+    px = pd.merge(pxorig, univ.drop_duplicates(), on='code', how='left')
     logger.info('Enriching return')
     px = px.groupby(px.code).apply(get_prevclose)
     prevpx = dc.price[dc.price.date==max(dc.price.date)][['code','close']]
-    pxtmp = pd.merge(px[px.date==startdate], prevpx, on='code')
-    px.loc[px.date==startdate, 'prevclose'] = pxtmp['close_y'].tolist()
+    pxtmp = pd.merge(px[px.date==startdate][['code']], prevpx, on='code', how='left')
+    px.loc[px.date==startdate, 'prevclose'] = pxtmp['close'].tolist()
     px['return'] = (px['close'] - px['prevclose']) / px['prevclose']
     logger.info('Enriching high/low')
     pxmerged = pd.concat([dc.price, px], ignore_index=True)

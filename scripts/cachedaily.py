@@ -24,9 +24,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(name)s  %(levelna
 
 codelist = get_code_list(['sz50', 'hs300', 'zz500'])
 
-px = get_daily_price(codelist, startdate, enddate)
+pxorig = get_daily_price(codelist, startdate, enddate)
 
-px = enrich(px)
+px = enrich(pxorig)
 
 save_csv(px)
 
