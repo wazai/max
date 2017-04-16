@@ -189,7 +189,12 @@ class Alpha(object):
                 G.add_node(child.__name__)
                 G.add_edge(node.__name__, child.__name__)
 
-        nx.draw(G)
+        edges = [(u, v) for (u, v, d) in G.edges(data=True)]
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_labels(G,pos,font_size=15,font_family='sans-serif')
+        nx.draw_networkx_nodes(G, pos, node_size=1000)
+        nx.draw_networkx_edges(G, pos, edgelist=edges,width=3)
+        plt.axis('off')
         plt.show()
 
     '''
