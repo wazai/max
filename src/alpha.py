@@ -6,7 +6,7 @@ import networkx as nx
 import datetime as dt
 from sklearn import linear_model
 
-class alpha(object):
+class Alpha(object):
     """Object that contains calibration of alpha and connection between alphas"""
     '''
     ------------------------------
