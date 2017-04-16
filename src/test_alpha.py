@@ -24,5 +24,5 @@ a.metrics()
 a.draw_graph()
 a.plot_return()
 
-# # backtest
+# backtest
 a.backtest('2017-01-01','2017-02-01')
