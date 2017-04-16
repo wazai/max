@@ -20,7 +20,6 @@ class Alpha(object):
         self.__name__ = name
         self.alpha = np.array([])
         self.space = space
-        self.mkt_data = pd.DataFrame(columns=self.space)
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
@@ -88,7 +87,6 @@ class Alpha(object):
 
     def clean_historic_data(self):
         '''clean up all historic data. this should be used before backtest'''
-        self.mkt_data = pd.DataFrame(columns=self.space)
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
