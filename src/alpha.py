@@ -23,8 +23,8 @@ class Alpha(object):
         self.mkt_data = pd.DataFrame(columns=self.space)
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
-        self.historic_mkt_return = pd.DataFrame()
-        self.historic_alpha = pd.DataFrame()
+        self.historic_mkt_return = pd.DataFrame(columns=self.space)
+        self.historic_alpha = pd.DataFrame(columns=self.space)
 
     def is_leaf(self):
         return not len(self.children) == 0
@@ -87,8 +87,8 @@ class Alpha(object):
         self.mkt_data = pd.DataFrame(columns=self.space)
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
-        self.historic_mkt_return = pd.DataFrame()
-        self.historic_alpha = pd.DataFrame()
+        self.historic_mkt_return = pd.DataFrame(columns=self.space)
+        self.historic_alpha = pd.DataFrame(columns=self.space)
 
     '''
     ------------------------------
@@ -200,6 +200,8 @@ class Alpha(object):
 
     def backtest(self, start_date, end_date, *args):
 
+        print('Running backtester ... ')
+
         self.clean_historic_data()
 
         dates = pd.date_range(start_date, end_date)
@@ -216,4 +218,5 @@ class Alpha(object):
         self.get_historic_alpha_return(start_date, end_date)
         self.plot_return()
         self.metrics()
-        self.historic_alpha = pd.DataFrame(columns=self.space)
+
+        self.clean_historic_data()
