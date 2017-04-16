@@ -69,8 +69,12 @@ class Alpha(object):
         '''Calculate alpha based on mkt data'''
         # for test only, will be override in derived nodes
 
-        self.get_mkt(date)
-        self.alpha = np.average(self.mkt_data, axis=0)
+        days = 3
+        start_date = date - dt.timedelta(days=days)
+        dates = pd.date_range(str(start_date), periods=days)
+        mkt_data = pd.DataFrame(npr.randn(days,len(self.space)), index=dates, columns=self.space)
+
+        self.alpha = np.average(mkt_data, axis=0)
 
     def get_historic_alpha_return(self,start_date=dt.date.today()-dt.timedelta(days=100),
                                   end_date=dt.date.today()):
@@ -95,14 +99,6 @@ class Alpha(object):
         Retrieve data functions
     ------------------------------
     '''
-    def get_mkt(self, date):
-        '''get all mkt data needed to calculate alpha'''
-        # for test only, will be override in derived nodes
-        days = 3
-        start_date = date - dt.timedelta(days=days)
-        dates = pd.date_range(str(start_date), periods=days)
-        self.mkt_data =  pd.DataFrame(npr.randn(days,len(self.space)), index=dates, columns=self.space)
-
     def get_benchmark(self, start_date=dt.date.today()-dt.timedelta(days=100),
                       end_date=dt.date.today()):
         '''get benchmark return'''
