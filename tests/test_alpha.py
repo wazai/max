@@ -5,12 +5,14 @@ import src.alpha as ap
 a = ap.Alpha('a1')
 b = ap.Alpha('a2')
 c = ap.Alpha('a3')
-d = ap.Alpha()
+d = ap.Alpha('a4')
+e = ap.Alpha('a5')
 
 # add connection
 a.add_child(b)
 a.add_child(c)
 c.add_child(d)
+c.add_child(e)
 
 # do some calculation
 a.get_benchmark()

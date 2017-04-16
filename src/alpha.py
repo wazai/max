@@ -175,13 +175,19 @@ class Alpha(object):
 
     def draw_graph(self):
         '''draw graph of all alphas, will move this out to a library'''
+
         G = nx.Graph()
+        stack = [ self ]
 
-        G.add_node(self.__name__)
+        while stack:
+            node = stack.pop()
+            stack += node.children
 
-        for child in self.children:
-            G.add_node(child.__name__)
-            G.add_edge(self.__name__, child.__name__)
+            G.add_node(node.__name__)
+
+            for child in node.children:
+                G.add_node(child.__name__)
+                G.add_edge(node.__name__, child.__name__)
 
         nx.draw(G)
         plt.show()
