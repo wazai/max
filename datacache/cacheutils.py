@@ -51,7 +51,6 @@ def rolling_operation(func, windowlen, col, newcol):
 def enrich(pxorig):
     logger.info('Enriching price data')
     startdate = min(pxorig.date)
-    enddate = max(pxorig.date)
     dates = DataCenter.get_business_days_within(startdate, 60, 0)
     dc = DataCenter(dates[0], startdate)
     dc.price = dc.price[dc.price['date'] < startdate]
