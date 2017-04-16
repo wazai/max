@@ -1,5 +1,5 @@
 
-import alpha as ap
+import src.alpha as ap
 
 # create nodes
 a = ap.Alpha('a1')

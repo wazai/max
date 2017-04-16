@@ -72,8 +72,8 @@ class Alpha(object):
         self.get_mkt(date)
         self.alpha = np.average(self.mkt_data, axis=0)
 
-    def get_historic_alpha_return(self,start_date=dt.datetime.today().date()-dt.timedelta(days=100),
-                                  end_date=dt.datetime.today().date()):
+    def get_historic_alpha_return(self,start_date=dt.date.today()-dt.timedelta(days=100),
+                                  end_date=dt.date.today()):
         '''dot product between historic alpha and historic mkt return. be careful of the date!'''
         if not len(self.historic_alpha):
             self.get_historic_alpha(start_date, end_date)
@@ -95,21 +95,21 @@ class Alpha(object):
         dates = pd.date_range(str(start_date), periods=days)
         self.mkt_data =  pd.DataFrame(npr.randn(days,len(self.space)), index=dates, columns=self.space)
 
-    def get_benchmark(self, start_date=dt.datetime.today().date()-dt.timedelta(days=100),
-                      end_date=dt.datetime.today().date()):
+    def get_benchmark(self, start_date=dt.date.today()-dt.timedelta(days=100),
+                      end_date=dt.date.today()):
         '''get benchmark return'''
         # for test only, will be override in derived nodes
         dates = pd.date_range(str(start_date),str(end_date))
         self.benchmark = pd.Series(npr.randn(len(dates))+0.5, index=dates)
 
-    def get_historic_mkt_return(self, start_date=dt.datetime.today().date()-dt.timedelta(days=100),
-                                end_date=dt.datetime.today().date()):
+    def get_historic_mkt_return(self, start_date=dt.date.today()-dt.timedelta(days=100),
+                                end_date=dt.date.today()):
         '''get historic mkt return'''
         dates = pd.date_range(str(start_date), str(end_date) )
         self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
 
-    def get_historic_alpha(self, start_date=dt.datetime.today().date()-dt.timedelta(days=100),
-                           end_date=dt.datetime.today().date()):
+    def get_historic_alpha(self, start_date=dt.date.today()-dt.timedelta(days=100),
+                           end_date=dt.date.today()):
         '''get historic alpha'''
         dates = pd.date_range(str(start_date), str(end_date))
         self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), index=dates)
