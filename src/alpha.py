@@ -82,6 +82,14 @@ class Alpha(object):
 
         self.historic_alpha_return = (self.historic_alpha.shift(1) * self.historic_mkt_return).sum(axis=1)
 
+    def clean_historic_data(self):
+        '''clean up all historic data. this should be used before backtest'''
+        self.mkt_data = pd.DataFrame(columns=self.space)
+        self.benchmark = pd.Series()
+        self.historic_alpha_return = pd.Series()
+        self.historic_mkt_return = pd.DataFrame()
+        self.historic_alpha = pd.DataFrame()
+
     '''
     ------------------------------
         Retrieve data functions
@@ -191,6 +199,8 @@ class Alpha(object):
     '''
 
     def backtest(self, start_date, end_date, *args):
+
+        self.clean_historic_data()
 
         dates = pd.date_range(start_date, end_date)
 
