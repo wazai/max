@@ -26,7 +26,7 @@ class Alpha(object):
         self.historic_alpha = pd.DataFrame(columns=self.space)
 
     def is_leaf(self):
-        return not len(self.children) == 0
+        return len(self.children) == 0
 
     def add_child(self, child):
         self.children.append(child)
@@ -45,6 +45,12 @@ class Alpha(object):
         '''get alpha from cal if it is a leaf node,
         otherwise blend children alphas into one'''
         if self.is_leaf():
+            if self.valid == 1:
+                return self.alpha
+            else:
+                self.cal(date)
+                return self.alpha
+        else:
             # combine children alpha using average
             res = []
             for child in self.children:
@@ -53,12 +59,7 @@ class Alpha(object):
             self.valid = 1
 
             return self.alpha
-        else:
-            if self.valid == 1:
-                return self.alpha
-            else:
-                self.cal(date)
-                return self.alpha
+
 
     def blend(self, alphas):
         '''simple blend function, take the average'''
