@@ -9,6 +9,7 @@ import numpy as np
 import os
 import datetime
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,10 @@ class DataCenter:
     @staticmethod
     def get_datapath():
         paths = dict()
-        paths['data'] = os.path.join(os.environ['HOME'], 'Dropbox/HW/data')
+        if sys.platform == 'win32':
+            paths['data'] = os.path.join(os.environ['HOMEPATH'], 'Dropbox\\HW\\data')
+        else:
+            paths['data'] = os.path.join(os.environ['HOME'], 'Dropbox/HW/data')
         paths['marketdata'] = os.path.join(paths['data'], 'marketdata')
         paths['dailycache'] = os.path.join(paths['marketdata'], 'dailycache')
         paths['misc'] = os.path.join(paths['marketdata'], 'misc')
