@@ -50,7 +50,7 @@ class DataCenter:
         paths = self.get_datapath()
         self.paths = paths
         self.business_days = self.get_business_days()
-        self.price = self.load_daily_price(startdate, enddate)
+        self.price = self._load_daily_price(startdate, enddate)
         self.univ_dict = dict()
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
@@ -58,7 +58,7 @@ class DataCenter:
             self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':object})
         logger.info('Finish initializing data center')
     
-    def load_daily_price(self, startdate, enddate):
+    def _load_daily_price(self, startdate, enddate):
         logger.info('Loading daily cache from %s to %s', startdate, enddate)
         bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
         bdays_list = bdays.tolist()
@@ -67,4 +67,7 @@ class DataCenter:
         pxcache = pd.concat(px_list)
         logger.info('Daily cache loaded')
         return pxcache
+
+
+
 
