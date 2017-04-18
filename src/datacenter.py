@@ -14,7 +14,7 @@ import datetime as dt
 
 logger = logging.getLogger(__name__)
 
-class DataCenter:
+class DataCenter(object):
 
     @staticmethod
     def get_datapath():
@@ -46,7 +46,7 @@ class DataCenter:
         nforward = min(nforward, len(dates)-pos)
         return dates[pos-nbackward:pos+nforward]
         
-    def __init__(self, startdate = '20100101', enddate = datetime.date.today().strftime('%Y%m%d')):
+    def __init__(self, startdate='20100101', enddate=datetime.date.today().strftime('%Y%m%d')):
         logger.info('Initializing data center')
         paths = self.get_datapath()
         self.paths = paths
@@ -72,7 +72,7 @@ class DataCenter:
     def load_codes_return(self, codes, start_date, end_date):
         df = self.price[['date', 'code', 'return']]
         df = df[df['code'].isin(codes)]
-        pivot = df.pivot_table(values='return',index=['date'],columns=['code'])
+        pivot = df.pivot_table(values='return', index=['date'], columns=['code'])
         return pivot[start_date:end_date]
 
 
