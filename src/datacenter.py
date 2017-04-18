@@ -52,6 +52,11 @@ class DataCenter(object):
         self.paths = paths
         self.business_days = self.get_business_days()
         self.price = self._load_daily_price(startdate, enddate)
+
+        # Get start and end dates of DataCenter
+        self.start_date = self.price['date'].min()
+        self.end_date = self.price['date'].max()
+
         self.univ_dict = dict()
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
