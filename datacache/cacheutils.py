@@ -8,7 +8,6 @@ import tushare as ts
 import pandas as pd
 import os
 from datacenter import *
-import utils as utils
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ datapath = DataCenter.get_datapath()
 def get_daily_price(codelist, startdate, enddate):
     pxall = pd.DataFrame()
     for i, code in enumerate(codelist):
-        logger.info("Downloading price for %s (%i/%i)", code, i+i, len(codelist))
+        logger.info("Downloading price for %s (%i/%i)", code, i+1, len(codelist))
         px = ts.get_k_data(code, start=startdate, end=enddate) #autype='hfq'
         pxall = pxall.append(px)
     return pxall
