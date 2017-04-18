@@ -10,6 +10,7 @@ import os
 import datetime
 import logging
 import sys
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +64,15 @@ class DataCenter:
         bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
         bdays_list = bdays.tolist()
         filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
-        px_list = [pd.read_csv(x, dtype={'date':object,'code':object}) for x in filenames]
+        px_list = [pd.read_csv(x, dtype={'date': dt.datetime, 'code': str}, parse_dates=[0]) for x in filenames]
         pxcache = pd.concat(px_list)
         logger.info('Daily cache loaded')
         return pxcache
 
-
+    def load_codes_return(self, codes, start_date, end_date):
+        df = self.price[['date', 'code', 'return']]
+        df = df[df['code'].isin(codes)]
+        pivot = df.pivot_table(values='return',index=['date'],columns=['code'])
+        return pivot[start_date:end_date]
 
 
