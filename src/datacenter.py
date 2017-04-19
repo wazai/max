@@ -65,7 +65,7 @@ class DataCenter(object):
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
             logger.info('Load univ file %s', fn)
-            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':object})
+            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':str})
         logger.info('Finish initializing data center')
     
     def _load_daily_price(self, startdate, enddate):
