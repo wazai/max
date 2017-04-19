@@ -45,7 +45,11 @@ class DataCenter(object):
             pos = len(dates)
         nforward = min(nforward, len(dates)-pos)
         return dates[pos-nbackward:pos+nforward]
-        
+
+    def get_business_days_start_end(start_date, end_date):
+        dates = self.price['date']
+        return dates[start_date:end_date]
+
     def __init__(self, startdate='20100101', enddate=datetime.date.today().strftime('%Y%m%d')):
         logger.info('Initializing data center')
         paths = self.get_datapath()
