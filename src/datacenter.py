@@ -46,7 +46,7 @@ class DataCenter(object):
         nforward = min(nforward, len(dates)-pos)
         return dates[pos-nbackward:pos+nforward]
 
-    def get_business_days_start_end(start_date, end_date):
+    def get_business_days_start_end(self, start_date, end_date):
         dates = self.price['date']
         return dates[start_date:end_date]
 
