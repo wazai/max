@@ -9,6 +9,7 @@ import pandas as pd
 import os
 from datacenter import *
 import logging
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def enrich(pxorig):
     px.loc[px.date==startdate, 'prevclose'] = pxtmp['close'].tolist()
     px['return'] = (px['close'] - px['prevclose']) / px['prevclose']
     logger.info('Enriching high/low')
+    px.date = pd.to_datetime(px.date, format='%Y-%m-%d')
     pxmerged = pd.concat([dc.price, px], ignore_index=True)
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'high', 'high21'))
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_min, 21, 'low', 'low21'))
