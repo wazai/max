@@ -104,7 +104,7 @@ def save_csv(dat):
     for date in dates:
         d = dat[dat['date']==date]
         filename = os.path.join(datapath['dailycache'])
-        filename = os.path.join(filename, date[:4]+'/'+date[:4]+date[5:7]+date[8:10]+'.csv')
+        filename = os.path.join(filename, str(date.year)+'/'+date.strftime('%Y%m%d')+'.csv')
         logger.info('Saving file to %s', filename)
         d.to_csv(filename, index=False)
 
