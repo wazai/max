@@ -20,6 +20,8 @@ def get_daily_price(codelist, startdate, enddate):
     for i, code in enumerate(codelist):
         logger.info("Downloading price for %s (%i/%i)", code, i+1, len(codelist))
         px = ts.get_k_data(code, start=startdate, end=enddate) #autype='hfq'
+        if px.empty:
+            logger.warning('Empty data loaded')
         pxall = pxall.append(px)
     return pxall
 
