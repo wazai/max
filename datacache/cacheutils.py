@@ -79,10 +79,10 @@ def enrich(pxorig):
     logger.info('Enriching median volume/turnover')
     pxmerged['vwap'] = 0.25 * (pxmerged['open']+pxmerged['close']+pxmerged['high']+pxmerged['low'])
     pxmerged['turnover'] = 100 * pxmerged['vwap'] * pxmerged['volume']
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'volume', 'med21volume'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'turnover', 'med21turnover'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 60, 'volume', 'med60volume'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 60, 'turnover', 'med60turnover'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 21, 'volume', 'med21volume'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 21, 'turnover', 'med21turnover'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'volume', 'med60volume'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'turnover', 'med60turnover'))
     px = pxmerged[pxmerged.date >= startdate][dc.price.columns]
     logger.info('Finish enriching')
     return px
