@@ -120,14 +120,13 @@ class Alpha(object):
         '''get benchmark return'''
         # for test only, will be override in derived nodes
         dates = self.datacenter.get_business_days_start_end(start_date,end_date)
-        self.benchmark = pd.Series(npr.randn(len(dates)), index=dates)
+        self.benchmark = pd.Series(npr.randn(len(dates))/10, index=dates)
 
     def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
         # dates = pd.date_range(str(start_date), str(end_date) )
         # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
         self.historic_mkt_return = self.datacenter.load_codes_return(self.space,start_date,end_date)
-
 
     def get_historic_alpha(self, start_date, end_date):
         '''
@@ -136,6 +135,11 @@ class Alpha(object):
         '''
         dates = self.datacenter.get_business_days_start_end(start_date,end_date)
         self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
+
+    def get_historic_position_from_alpha(self):
+        if not len(self.historic_alpha):
+            return
+
 
     '''
     ------------------------------
@@ -224,9 +228,12 @@ class Alpha(object):
     ------------------------------
     '''
 
-    def backtest(self, start_date, end_date, *args):
+    def backtest(self, start_date=None, end_date=None):
 
         print('Running backtester ... ')
+
+        if start_date == None: start_date = self.start_date
+        if end_date == None: end_date = self.end_date
 
         self.clean_historic_data()
 
@@ -246,3 +253,22 @@ class Alpha(object):
         self.metrics()
 
         self.clean_historic_data()
+
+class Position(object):
+
+    def cal_position(self,alpha):
+        if not len(alpha):
+            return []
+
+        return [ 1 if x > 0 else -1 for x in alpha ]
+
+class Backtester(object):
+
+    def __init__(self, alpha, position):
+        self.alpha = alpha
+        self.position_gen = position
+        self.start_date = alpha.start_date
+        self.end_date = alpha.end_date
+
+    def backtest(self):
+        self.alpha.backtest(self.start_date,self.end_date)
