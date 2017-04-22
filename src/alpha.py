@@ -87,7 +87,7 @@ class Alpha(object):
 
         self.alpha = np.average(mkt_data, axis=0)
 
-    def get_historic_alpha_return(self,start_date, end_date):
+    def get_historic_alpha_return(self, start_date, end_date):
         '''dot product between historic alpha and historic mkt return. be careful of the date!'''
         if not len(self.historic_alpha):
             self.get_historic_alpha(start_date, end_date)
@@ -101,7 +101,7 @@ class Alpha(object):
             self.get_alpha()
 
         # simple buy sell position
-        self.position = [ 1 if x > 0 else -1 for x in a ]
+        self.position = [ 1 if x > 0 else -1 for x in self.alpha ]
 
     def clean_historic_data(self):
         '''clean up all historic data. this should be used before backtest'''
