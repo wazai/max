@@ -1,9 +1,3 @@
-"""
-Portfolio Optimizer
-
-@author jingweiwu
-"""
-
 import numpy as np
 from scipy.optimize import minimize
 import logging
