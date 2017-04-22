@@ -1,9 +1,3 @@
-"""
-Utility functions
-
-@author: jingweiwu
-"""
-
 def date_10to8(date):
     return date[:4] + date[5:7] + date[8:10]
 

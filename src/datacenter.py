@@ -1,9 +1,3 @@
-"""
-Data Center
-
-@author: jingweiwu
-"""
-
 import pandas as pd
 import numpy as np
 import os
@@ -65,7 +59,7 @@ class DataCenter(object):
         univ_filenames = os.listdir(paths['univ'])
         for fn in univ_filenames:
             logger.info('Load univ file %s', fn)
-            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':object})
+            self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(paths['univ'],fn),dtype={'code':str})
         logger.info('Finish initializing data center')
     
     def _load_daily_price(self, startdate, enddate):
@@ -75,6 +69,7 @@ class DataCenter(object):
         filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
         px_list = [pd.read_csv(x, dtype={'date': dt.datetime, 'code': str}, parse_dates=[0]) for x in filenames]
         pxcache = pd.concat(px_list)
+        pxcache = pxcache.reset_index(drop=True)
         logger.info('Daily cache loaded')
         return pxcache
 

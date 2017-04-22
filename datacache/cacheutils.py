@@ -9,6 +9,7 @@ import pandas as pd
 import os
 from datacenter import *
 import logging
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ def get_daily_price(codelist, startdate, enddate):
     for i, code in enumerate(codelist):
         logger.info("Downloading price for %s (%i/%i)", code, i+1, len(codelist))
         px = ts.get_k_data(code, start=startdate, end=enddate) #autype='hfq'
+        if px.empty:
+            logger.warning('Empty data loaded')
         pxall = pxall.append(px)
     return pxall
 
@@ -64,6 +67,7 @@ def enrich(pxorig):
     px.loc[px.date==startdate, 'prevclose'] = pxtmp['close'].tolist()
     px['return'] = (px['close'] - px['prevclose']) / px['prevclose']
     logger.info('Enriching high/low')
+    px.date = pd.to_datetime(px.date, format='%Y-%m-%d')
     pxmerged = pd.concat([dc.price, px], ignore_index=True)
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'high', 'high21'))
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_min, 21, 'low', 'low21'))
@@ -75,10 +79,10 @@ def enrich(pxorig):
     logger.info('Enriching median volume/turnover')
     pxmerged['vwap'] = 0.25 * (pxmerged['open']+pxmerged['close']+pxmerged['high']+pxmerged['low'])
     pxmerged['turnover'] = 100 * pxmerged['vwap'] * pxmerged['volume']
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'volume', 'med21volume'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 21, 'turnover', 'med21turnover'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 60, 'volume', 'med60volume'))
-    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_max, 60, 'turnover', 'med60turnover'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 21, 'volume', 'med21volume'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 21, 'turnover', 'med21turnover'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'volume', 'med60volume'))
+    pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'turnover', 'med60turnover'))
     px = pxmerged[pxmerged.date >= startdate][dc.price.columns]
     logger.info('Finish enriching')
     return px
@@ -100,7 +104,7 @@ def save_csv(dat):
     for date in dates:
         d = dat[dat['date']==date]
         filename = os.path.join(datapath['dailycache'])
-        filename = os.path.join(filename, date[:4]+'/'+date[:4]+date[5:7]+date[8:10]+'.csv')
+        filename = os.path.join(filename, str(date.year)+'/'+date.strftime('%Y%m%d')+'.csv')
         logger.info('Saving file to %s', filename)
         d.to_csv(filename, index=False)
 
