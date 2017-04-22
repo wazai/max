@@ -14,12 +14,24 @@ class Alpha(object):
     ------------------------------
     '''
 
-    def __init__(self, name='GeneralAlpha', space=list('ABC')):
+    def __init__(self, name, space, datacenter):
+
+        # inputs
+        self.__name__ = name
+        self.space = space
+        self.datacenter = datacenter
+        self.start_date = datacenter.start_date
+        self.end_date = datacenter.end_date
+
+        # graph and validation
         self.children = []
         self.valid = 0
-        self.__name__ = name
+
+        # alpha and position, what we really need to calculate
         self.alpha = np.array([])
-        self.space = space
+        self.position = np.array([])
+
+        # some historic data for backtesting and benchmarking
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
@@ -49,9 +61,9 @@ class Alpha(object):
                 return self.alpha
             else:
                 self.cal(date)
+                self.valid = 1
                 return self.alpha
         else:
-            # combine children alpha using average
             res = []
             for child in self.children:
                 res.append(child.get_alpha(date))
@@ -59,7 +71,6 @@ class Alpha(object):
             self.valid = 1
 
             return self.alpha
-
 
     def blend(self, alphas):
         '''simple blend function, take the average'''
@@ -76,8 +87,7 @@ class Alpha(object):
 
         self.alpha = np.average(mkt_data, axis=0)
 
-    def get_historic_alpha_return(self,start_date=dt.date.today()-dt.timedelta(days=100),
-                                  end_date=dt.date.today()):
+    def get_historic_alpha_return(self,start_date, end_date):
         '''dot product between historic alpha and historic mkt return. be careful of the date!'''
         if not len(self.historic_alpha):
             self.get_historic_alpha(start_date, end_date)
@@ -86,36 +96,46 @@ class Alpha(object):
 
         self.historic_alpha_return = (self.historic_alpha.shift(1) * self.historic_mkt_return).sum(axis=1)
 
+    def get_position_from_alpha(self):
+        if not len(self.alpha):
+            self.get_alpha()
+
+        # simple buy sell position
+        self.position = [ 1 if x > 0 else -1 for x in a ]
+
     def clean_historic_data(self):
         '''clean up all historic data. this should be used before backtest'''
         self.benchmark = pd.Series()
         self.historic_alpha_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
         self.historic_alpha = pd.DataFrame(columns=self.space)
+        self.valid=0
 
     '''
     ------------------------------
         Retrieve data functions
     ------------------------------
     '''
-    def get_benchmark(self, start_date=dt.date.today()-dt.timedelta(days=100),
-                      end_date=dt.date.today()):
+    def get_benchmark(self, start_date, end_date):
         '''get benchmark return'''
         # for test only, will be override in derived nodes
-        dates = pd.date_range(str(start_date),str(end_date))
-        self.benchmark = pd.Series(npr.randn(len(dates))+0.5, index=dates)
+        dates = self.datacenter.get_business_days_start_end(start_date,end_date)
+        self.benchmark = pd.Series(npr.randn(len(dates)), index=dates)
 
-    def get_historic_mkt_return(self, start_date=dt.date.today()-dt.timedelta(days=100),
-                                end_date=dt.date.today()):
+    def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
-        dates = pd.date_range(str(start_date), str(end_date) )
-        self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
+        # dates = pd.date_range(str(start_date), str(end_date) )
+        # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
+        self.historic_mkt_return = self.datacenter.load_codes_return(self.space,start_date,end_date)
 
-    def get_historic_alpha(self, start_date=dt.date.today()-dt.timedelta(days=100),
-                           end_date=dt.date.today()):
-        '''get historic alpha'''
-        dates = pd.date_range(str(start_date), str(end_date))
-        self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), index=dates)
+
+    def get_historic_alpha(self, start_date, end_date):
+        '''
+        get historic alpha from storage, this is different from the backtester where we generate
+        historic_alpha on the fly
+        '''
+        dates = self.datacenter.get_business_days_start_end(start_date,end_date)
+        self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
 
     '''
     ------------------------------
@@ -130,15 +150,13 @@ class Alpha(object):
         print(self.children)
         print('----------- alpha --------------')
         print(self.alpha)
-        # print('----------- mkt data------------')
-        # print(self.mkt_data)
 
     def metrics(self):
         '''use benchmark and historic return to calculate metrics'''
         if not len(self.historic_alpha_return):
-            self.get_historic_alpha_return()
+            self.get_historic_alpha_return(self.start_date,self.end_date)
         if not len(self.benchmark):
-            self.get_benchmark()
+            self.get_benchmark(self.start_date, self.end_date)
 
         # simple sharp
         sharp = self.historic_alpha_return[1:].mean() / self.historic_alpha_return[1:].std()
@@ -160,11 +178,13 @@ class Alpha(object):
         print('beta:  ', m_beta)
 
     def plot_return(self):
-        plt.figure()
+
         if not len(self.historic_alpha_return):
-            self.get_historic_alpha_return()
+            self.get_historic_alpha_return(self.start_date,self.end_date)
         if not len(self.benchmark):
-            self.get_benchmark()
+            self.get_benchmark(self.start_date,self.end_date)
+
+        plt.figure()
         plot = self.benchmark.cumsum().plot(style='b',legend=True)
         plot = self.historic_alpha_return.cumsum().plot(style='g',legend=True)
         plt.legend(['Benchmark','Alpha'])
@@ -192,9 +212,9 @@ class Alpha(object):
 
         edges = [(u, v) for (u, v, d) in G.edges(data=True)]
         pos = nx.spring_layout(G)
-        nx.draw_networkx_labels(G,pos,font_size=15,font_family='sans-serif')
+        nx.draw_networkx_labels(G, pos, font_size=15, font_family='sans-serif')
         nx.draw_networkx_nodes(G, pos, node_size=1000)
-        nx.draw_networkx_edges(G, pos, edgelist=edges,width=3)
+        nx.draw_networkx_edges(G, pos, edgelist=edges, width=3)
         plt.axis('off')
         plt.show()
 

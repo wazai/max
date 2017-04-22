@@ -1,12 +1,16 @@
 
 import src.alpha as ap
+import src.datacenter as dc
+
+d = dc.DataCenter('20170101','20170201')
+codes = ['000001','000002','000009']
 
 # create nodes
-a = ap.Alpha('a1')
-b = ap.Alpha('a2')
-c = ap.Alpha('a3')
-d = ap.Alpha('a4')
-e = ap.Alpha('a5')
+a = ap.Alpha('a1', codes, d)
+b = ap.Alpha('a2', codes, d)
+c = ap.Alpha('a3', codes, d)
+d = ap.Alpha('a4', codes, d)
+e = ap.Alpha('a5', codes, d)
 
 # add connection
 a.add_child(b)
@@ -15,12 +19,11 @@ c.add_child(d)
 c.add_child(e)
 
 # do some calculation
-a.get_benchmark()
 a.get_alpha()
 
 # show what's in a node
 a.show()
-a.metrics()
+#a.metrics()
 
 # plot some graph
 a.draw_graph()
