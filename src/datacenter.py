@@ -47,8 +47,8 @@ class DataCenter(object):
         return dates[pos-nbackward:pos+nforward]
 
     def get_business_days_start_end(self, start_date, end_date):
-        dates = self.price['date']
-        return dates[start_date:end_date]
+        res = self.price.set_index('date')
+        return res[start_date:end_date].index
 
     def __init__(self, startdate='20100101', enddate=datetime.date.today().strftime('%Y%m%d')):
         logger.info('Initializing data center')
