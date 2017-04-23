@@ -51,7 +51,7 @@ def enrich(pxorig):
     logger.info('Enriching price data')
     startdate = min(pxorig.date)
     dates = DataCenter.get_business_days_within(startdate, 60, 0)
-    dc = DataCenter(dates[0], startdate)
+    dc = DataCenter(dates[0], dates[-2])
     if dc.price.empty:
         codes = set(pxorig.code.tolist())
         histpx = pd.DataFrame({'date':len(codes)*[dates[-2]]})
@@ -123,7 +123,7 @@ def get_business_days():
     bdays = cal[cal.isopen==1]
     bdays[['date']].to_csv(os.path.join(datapath['misc'], 'business_days.csv'), index=False)
 
-def get_file_days():
+def update_file_days():
     logger.info('Updating file days')
     years = os.listdir(datapath['dailycache'])
     dates = []
