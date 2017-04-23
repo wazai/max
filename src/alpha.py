@@ -254,7 +254,7 @@ class Alpha(object):
 
         self.clean_historic_data()
 
-class Position(object):
+class Rule(object):
 
     def cal_position(self,alpha):
         if not len(alpha):
