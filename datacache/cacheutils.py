@@ -59,7 +59,6 @@ def enrich(pxorig):
         histpx['close'] = np.nan
     else:
         histpx = dc.price[dc.price['date'] < startdate]
-    #dc.price = dc.price[dc.price['date'] < startdate]
     univ = pd.concat([dc.univ_dict['sz50'][['code','name']],
                       dc.univ_dict['hs300'][['code','name']],
                       dc.univ_dict['zz500'][['code','name']]], ignore_index=True)
