@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(maxpath, 'src'))
 from datacenter import *
 from covariance import *
 
+# change the level to logging.DEBUG to see more log
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(name)s  %(levelname)s  %(message)s')
 
 dc = DataCenter(startdate='2015-01-01', enddate='2017-03-31')
