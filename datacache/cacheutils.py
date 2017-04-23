@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 datapath = DataCenter.get_datapath()
 
 def get_daily_price(codelist, startdate, enddate):
+    logger.info('Downloading price from %s to %s', startdate, enddate)
     pxall = pd.DataFrame()
     for i, code in enumerate(codelist):
         logger.info("Downloading price for %s (%i/%i)", code, i+1, len(codelist))

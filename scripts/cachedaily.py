@@ -4,6 +4,9 @@ if len(argv) != 3:
     raise Exception('Incorrect usage. Please run as\n\t python cachedaily.py [start-date] [end-date]')
 script, startdate, enddate = argv
 
+if len(startdate)!=10 or len(enddate)!=10:
+	raise Exception('Use yyyy-mm-dd format for startdate and enddate')
+
 import sys
 import os
 maxpath = os.path.join(os.environ['HOME'], 'max')
