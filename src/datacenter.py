@@ -83,6 +83,8 @@ class DataCenter(object):
         self.price = pxcache
 
     def load_codes_return(self, codes, start_date, end_date):
+        if self.price.empty:
+            return pd.DataFrame()
         df = self.price[['date', 'code', 'return']]
         df = df[df['code'].isin(codes)]
         pivot = df.pivot_table(values='return', index=['date'], columns=['code'])
