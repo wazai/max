@@ -68,6 +68,8 @@ class DataCenter(object):
     
     def _load_daily_price(self, startdate, enddate):
         logger.info('Loading daily cache from %s to %s', startdate, enddate)
+        if len(startdate)==8:
+            logger.warning('Use yyyy-mm-dd format for start and end date')
         bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
         bdays_list = bdays.tolist()
         bdays_list = map(lambda x: x[:4] + x[5:7] + x[8:10], bdays_list)
