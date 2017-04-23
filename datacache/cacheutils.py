@@ -1,5 +1,6 @@
 import tushare as ts
 import pandas as pd
+import numpy as np
 import os
 from datacenter import *
 import logging
@@ -51,14 +52,21 @@ def enrich(pxorig):
     startdate = min(pxorig.date)
     dates = DataCenter.get_business_days_within(startdate, 60, 0)
     dc = DataCenter(dates[0], startdate)
-    dc.price = dc.price[dc.price['date'] < startdate]
+    if dc.price.empty:
+        codes = set(pxorig.code.tolist())
+        histpx = pd.DataFrame({'date':len(codes)*[dates[-2]]})
+        histpx['code'] = codes
+        histpx['close'] = np.nan
+    else:
+        histpx = dc.price[dc.price['date'] < startdate]
+    #dc.price = dc.price[dc.price['date'] < startdate]
     univ = pd.concat([dc.univ_dict['sz50'][['code','name']],
                       dc.univ_dict['hs300'][['code','name']],
                       dc.univ_dict['zz500'][['code','name']]], ignore_index=True)
     px = pd.merge(pxorig, univ.drop_duplicates(), on='code', how='left')
     logger.info('Enriching return')
     px = px.groupby(px.code).apply(get_prevclose)
-    prevpx = dc.price[dc.price.date==max(dc.price.date)][['code','close']]
+    prevpx = histpx[histpx.date==max(histpx.date)][['code','close']]
     pxtmp = pd.merge(px[px.date==startdate][['code']], prevpx, on='code', how='left')
     px.loc[px.date==startdate, 'prevclose'] = pxtmp['close'].tolist()
     px['return'] = (px['close'] - px['prevclose']) / px['prevclose']
@@ -79,11 +87,12 @@ def enrich(pxorig):
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 21, 'turnover', 'med21turnover'))
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'volume', 'med60volume'))
     pxmerged = pxmerged.groupby(pxmerged.code).apply(rolling_operation(pd.rolling_median, 60, 'turnover', 'med60turnover'))
-    px = pxmerged[pxmerged.date >= startdate][dc.price.columns]
+    columns = pd.read_csv(os.path.join(datapath['misc'], 'columns.csv'))
+    px = pxmerged[pxmerged.date >= startdate][columns.column.tolist()]
     logger.info('Finish enriching')
     return px
 
-def save_csv_archive(dat):
+def save_price_to_csv_archive(dat):
     dates = list(set(dat['date']))
     dates.sort()
     for date in dates:
@@ -94,7 +103,7 @@ def save_csv_archive(dat):
         logger.info('Saving file to %s', filename)
         d.to_csv(filename, index=False)
 
-def save_csv(dat):
+def save_price_to_csv(dat):
     dates = list(set(dat['date']))
     dates.sort()
     for date in dates:
@@ -113,15 +122,16 @@ def get_trading_calender():
 def get_business_days():
     cal = pd.read_csv(os.path.join(datapath['misc'], 'trading_calender.csv'))
     bdays = cal[cal.isopen==1]
-    bdays['date'].to_csv(os.path.join(datapath['misc'], 'business_days.csv'), index=False)
+    bdays[['date']].to_csv(os.path.join(datapath['misc'], 'business_days.csv'), index=False)
 
-def update_business_days():
-    logger.info('Updating business days')
+def get_file_days():
+    logger.info('Updating file days')
     years = os.listdir(datapath['dailycache'])
     dates = []
     for year in years:
         filenames = os.listdir(os.path.join(datapath['dailycache'], year))
         dates += [x[:8] for x in filenames]
-    dat = pd.DataFrame({'index':range(len(dates)), 'date':dates})
-    dat.to_csv(os.path.join(datapath['misc'], 'business_days.csv'), index=False)
+    bdays = pd.DataFrame({'date':dates})
+    bdays['date'] = pd.to_datetime(bdays.date, format='%Y%m%d')
+    bdays.to_csv(os.path.join(datapath['misc'], 'file_days.csv'), index=False)
     

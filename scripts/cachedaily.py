@@ -1,11 +1,3 @@
-"""
-Get and enrich daily data from tushare
-
-Usage: python cachedaily.py [start-date] [end-date]
-
-@author: jingweiwu
-"""
-
 from sys import argv
 
 if len(argv) != 3:
@@ -28,6 +20,6 @@ pxorig = get_daily_price(codelist, startdate, enddate)
 
 px = enrich(pxorig)
 
-save_csv(px)
+save_price_to_csv(px)
 
-update_business_days()
+#update_business_days()
