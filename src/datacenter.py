@@ -49,11 +49,15 @@ class DataCenter(object):
         paths = self.get_datapath()
         self.paths = paths
         self.business_days = self.get_business_days(bday_t='file')
-        self.price = self._load_daily_price(startdate, enddate)
+        self._load_daily_price(startdate, enddate)
 
         # Get start and end dates of DataCenter
-        self.start_date = self.price['date'].min()
-        self.end_date = self.price['date'].max()
+        if self.price.empty:
+            self.start_date = ''
+            self.end_date = ''
+        else:
+            self.start_date = self.price['date'].min()
+            self.end_date = self.price['date'].max()
 
         self.univ_dict = dict()
         univ_filenames = os.listdir(paths['univ'])
@@ -69,10 +73,14 @@ class DataCenter(object):
         bdays_list = map(lambda x: x[:4] + x[5:7] + x[8:10], bdays_list)
         filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
         px_list = [pd.read_csv(x, dtype={'date': dt.datetime, 'code': str}, parse_dates=[0]) for x in filenames]
-        pxcache = pd.concat(px_list)
-        pxcache = pxcache.reset_index(drop=True)
-        logger.info('Daily cache loaded')
-        return pxcache
+        if not px_list:
+            logger.warning('Empty price cache')
+            pxcache = pd.DataFrame()
+        else:
+            pxcache = pd.concat(px_list)
+            pxcache = pxcache.reset_index(drop=True)
+            logger.info('Daily cache loaded')
+        self.price = pxcache
 
     def load_codes_return(self, codes, start_date, end_date):
         df = self.price[['date', 'code', 'return']]
