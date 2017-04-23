@@ -24,11 +24,11 @@ class DataCenter(object):
         return paths
 
     @staticmethod
-    def get_business_days():
+    def get_business_days(bday_t = 'business'):
         logger.info('Loading business days')
         paths = DataCenter.get_datapath()
-        business_days = pd.read_csv(os.path.join(paths['misc'],'business_days.csv'),dtype={'date':object})
-        return business_days['date'].values
+        bdays = pd.read_csv(os.path.join(paths['misc'], bday_t+'_days.csv'),dtype={'date':str})
+        return bdays['date'].values
 
     @staticmethod
     def get_business_days_within(yyyymmdd, nbackward, nforward):
@@ -44,11 +44,11 @@ class DataCenter(object):
         res = self.price.set_index('date')
         return res[start_date:end_date].index.unique()
 
-    def __init__(self, startdate='20100101', enddate=datetime.date.today().strftime('%Y%m%d')):
+    def __init__(self, startdate='2010-01-01', enddate=datetime.date.today().strftime('%Y-%m-%d')):
         logger.info('Initializing data center')
         paths = self.get_datapath()
         self.paths = paths
-        self.business_days = self.get_business_days()
+        self.business_days = self.get_business_days(bday_t='file')
         self.price = self._load_daily_price(startdate, enddate)
 
         # Get start and end dates of DataCenter
@@ -66,6 +66,7 @@ class DataCenter(object):
         logger.info('Loading daily cache from %s to %s', startdate, enddate)
         bdays = self.business_days[(self.business_days>=startdate) & (self.business_days<=enddate)]
         bdays_list = bdays.tolist()
+        bdays_list = map(lambda x: x[:4] + x[5:7] + x[8:10], bdays_list)
         filenames = [os.path.join(self.paths['dailycache'], x[:4], x+'.csv') for x in bdays_list]
         px_list = [pd.read_csv(x, dtype={'date': dt.datetime, 'code': str}, parse_dates=[0]) for x in filenames]
         pxcache = pd.concat(px_list)
