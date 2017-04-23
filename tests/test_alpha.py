@@ -2,7 +2,7 @@
 import src.alpha as ap
 import src.datacenter as dc
 
-d = dc.DataCenter('20170101','20170201')
+d = dc.DataCenter('2017-01-01','2017-02-01')
 codes = ['000001','000002','000009']
 
 # create nodes
