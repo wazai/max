@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class DataCenter(object):
 
     @staticmethod
-    def get_datapath():
+    def get_all_paths():
         paths = dict()
         if sys.platform == 'win32':
             paths['data'] = os.path.join(os.environ['HOMEPATH'], 'Dropbox\\HW\\data')
@@ -21,12 +21,18 @@ class DataCenter(object):
         paths['dailycache'] = os.path.join(paths['marketdata'], 'dailycache')
         paths['misc'] = os.path.join(paths['marketdata'], 'misc')
         paths['univ'] = os.path.join(paths['marketdata'], 'univ')
+        paths['covariance'] = os.path.join(paths['data'], 'covariance')
         return paths
+    
+    @staticmethod
+    def get_path(name):
+        paths = DataCenter.get_all_paths()
+        return paths[name]
 
     @staticmethod
     def get_business_days(bday_t = 'business'):
         logger.info('Loading business days')
-        paths = DataCenter.get_datapath()
+        paths = DataCenter.get_all_paths()
         bdays = pd.read_csv(os.path.join(paths['misc'], bday_t+'_days.csv'),dtype={'date':str})
         return bdays['date'].values
 
@@ -46,7 +52,7 @@ class DataCenter(object):
 
     def __init__(self, startdate='2010-01-01', enddate=datetime.date.today().strftime('%Y-%m-%d')):
         logger.info('Initializing data center')
-        paths = self.get_datapath()
+        paths = self.get_all_paths()
         self.paths = paths
         self.business_days = self.get_business_days(bday_t='file')
         self._load_daily_price(startdate, enddate)

@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-datapath = DataCenter.get_datapath()
+datapath = DataCenter.get_all_paths()
 
 def get_daily_price(codelist, startdate, enddate):
     logger.info('Downloading price from %s to %s', startdate, enddate)
