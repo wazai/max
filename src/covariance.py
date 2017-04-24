@@ -151,18 +151,18 @@ class Covariance:
 
     def plot_ema_vol(self, i):
         plt.figure()
-        plot = pd.Series(self.vol[:,i], index=self.ret.index).plot(style='b', legend=True)
-        plot = pd.Series(self.vol_ema[:,i], index=self.ret.index).plot(style='g', legend=True)
-        plt.legend(['Empirical', 'EMA'])
+        plot = pd.Series(self.vol[self.window:,i], index=self.ret.index[self.window:]).plot(style='b', legend=True)
+        plot = pd.Series(self.vol_ema[self.window:,i], index=self.ret.index[self.window:]).plot(style='g', legend=True)
+        plt.legend(['Ex post', 'EMA'])
         plot.set_ylabel('Daily Vol')
         plt.show()
     
     def plot_ema_cor(self, i, j):
         plt.figure()
-        plot = pd.Series(self.cor[:,i,j], index=self.ret.index).plot(style='b', legend=True)
-        plot = pd.Series(self.cor_ema[:,i,j], index=self.ret.index).plot(style='g', legend=True)
-        plt.legend(['Empirical', 'EMA'])
-        plot.set_ylabel('Daily Correlation')
+        plot = pd.Series(self.cor[self.window:,i,j], index=self.ret.index[self.window:]).plot(style='b', legend=True)
+        plot = pd.Series(self.cor_ema[self.window:,i,j], index=self.ret.index[self.window:]).plot(style='g', legend=True)
+        plt.legend(['Ex post', 'EMA'])
+        plot.set_ylabel('Daily Return Correlation')
         plt.show()
     
     def to_csv(self, cov, folder):
