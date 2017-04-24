@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 import logging
+import os
 import matplotlib.pyplot as plt
+from datacenter import *
 
 logger = logging.getLogger(__name__)
 
@@ -84,31 +86,6 @@ class Covariance:
             self.vol_ema = vol_ema
             self.cov_ema = cov_ema
         return cov_ema
-
-    def compute_log_likelihood_old(self, cov, ipos, jpos, lag=1):
-        logger.debug('Computing log likelihood')
-        T = self.ret.shape[0]
-        X = np.nan_to_num(self.ret.values.copy()) # fill nan with 0
-        loglik = 0
-        cnt = 0
-        for i in range(self.window, T-lag):
-            covi = cov[i,:,:]
-            nanidx = np.isnan(np.diag(covi))
-            covi_obs = covi[~nanidx,:][:,~nanidx]
-            eigval, eigvec = np.linalg.eig(covi_obs)
-            covi_det = np.linalg.det(covi_obs)
-            self.covdet_path[ipos, jpos, i] = covi_det
-            if not np.isnan(covi_det) and abs(covi_det) != 0:
-                cnt += 1
-                logliki = -(np.sum(~nanidx)/2.0) * np.log(2*np.pi)
-                logliki += -0.5 * np.log(np.abs(covi_det))
-                xvec = X[i+lag,~nanidx]
-                logliki += -0.5 * xvec.dot(np.linalg.inv(covi_obs)).dot(xvec)
-                self.loglik_path[ipos,jpos,i] = logliki
-                self.covinvdet[ipos,jpos,i] = np.linalg.det(np.linalg.inv(covi_obs))
-                self.xTinvSigmax[ipos,jpos,i] = xvec.dot(np.linalg.inv(covi_obs)).dot(xvec)
-                loglik += logliki
-        return loglik / cnt
     
     def compute_log_likelihood(self, cov, ipos, jpos, lag=1):
         logger.debug('Computing log likelihood')
@@ -124,14 +101,14 @@ class Covariance:
                 eigval, eigvec = np.linalg.eig(covi_obs)
                 eigval[eigval<self.EIGVAL_THLD] = 0
                 covi_det = np.prod(eigval[eigval>0])
-                self.covdet_path[ipos, jpos, i] = covi_det
+                self.covdet_path[i,ipos,jpos] = covi_det
                 cnt += 1
                 logliki = -(np.sum(eigval>0)/2.0) * np.log(2*np.pi)
                 logliki += -0.5 * np.log(covi_det)
                 xvec = X[i+lag,~nanidx]
                 zvec = xvec.dot(eigvec)[eigval > 0]
                 logliki += -0.5 * np.sum(zvec * zvec * (1/eigval[eigval>0]))
-                self.loglik_path[ipos,jpos,i] = logliki
+                self.loglik_path[i,ipos,jpos] = logliki
                 loglik += logliki
         return loglik / cnt
     
@@ -140,6 +117,13 @@ class Covariance:
         plt.imshow(loglik, cmap='hot')
         plt.colorbar()
         plt.show()
+        
+    def plot_likelihood_path(self, i, j):
+        plt.figure()
+        plot = pd.Series(self.loglik_path[:,i,j], index=self.ret.index).plot()
+        plot.set_ylabel('Log Likelihood')
+        plot.set_title('alpha_cor='+str(self.alpha_cor_candidates[i]))
+        plt.show()
     
     def calibrate(self, alphas_cor, alphas_vol):
         logger.info('Calibrating EMA parameters')
@@ -147,8 +131,8 @@ class Covariance:
         n_vol = np.size(alphas_vol)
         loglik = np.repeat(np.nan, n_cor*n_vol).reshape(n_cor, n_vol)
         T = self.ret.shape[0]
-        self.loglik_path = np.repeat(np.nan, n_cor*n_vol*T).reshape(n_cor, n_vol,T)
-        self.covdet_path = np.repeat(np.nan, n_cor*n_vol*T).reshape(n_cor, n_vol,T)
+        self.loglik_path = np.repeat(np.nan, n_cor*n_vol*T).reshape(T,n_cor,n_vol)
+        self.covdet_path = np.repeat(np.nan, n_cor*n_vol*T).reshape(T,n_cor,n_vol)
         for i in range(n_cor):
             for j in range(n_vol):
                 cov = self.get_ema_cov(alphas_cor[i], alphas_vol[j])
@@ -161,6 +145,7 @@ class Covariance:
         self.loglik = loglik
         self.alpha_cor_candidates = alphas_cor
         self.alpha_vol_candidates = alphas_vol
+        self.plot_likelihood_path(maxidx[0][0], maxidx[0][1])
         logger.info('Optimal soln: alpha_cor = %.2f, alpha_vol = %.2f, avg loglik = %.2f',
                     self.alpha_cor, self.alpha_vol, loglik.max())
 
@@ -179,3 +164,19 @@ class Covariance:
         plt.legend(['Empirical', 'EMA'])
         plot.set_ylabel('Daily Correlation')
         plt.show()
+    
+    def to_csv(self, cov, folder):
+        path = os.path.join(DataCenter.get_path('covariance'), folder)
+        cols = self.ret.columns
+        T = self.ret.shape[0]
+        for i in range(self.window, T):
+            d = pd.DataFrame(cov[i,:,:], columns=cols)
+            d['code'] = cols
+            d = d[['code']+cols.tolist()]
+            date = self.ret.index[i]
+            dirname = os.path.join(path, str(date.year))
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
+            filename = os.path.join(dirname, date.strftime('%Y%m%d')+'.csv')
+            logger.info('Saving file to %s', filename)
+            d.to_csv(filename, index=False)
