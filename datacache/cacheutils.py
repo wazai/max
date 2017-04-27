@@ -9,17 +9,19 @@ logger = logging.getLogger(__name__)
 
 datapath = DataCenter.get_all_paths()
 
+
 def get_daily_price(codelist, startdate, enddate):
     logger.info('Downloading price from %s to %s', startdate, enddate)
     pxall = pd.DataFrame()
     for i, code in enumerate(codelist):
         logger.info("Downloading price for %s (%i/%i)", code, i+1, len(codelist))
-        px = ts.get_k_data(code, start=startdate, end=enddate) #autype='hfq'
+        px = ts.get_k_data(code, start=startdate, end=enddate)  #autype='hfq'
         if px.empty:
             logger.warning('Empty data loaded')
         else:
             pxall = pxall.append(px)
     return pxall
+
 
 def get_index_composition(index):
     if index == 'sz50':
@@ -30,6 +32,7 @@ def get_index_composition(index):
         filename = os.path.join(datapath['univ'], 'zz500.csv')
     return pd.read_csv(filename, dtype={'code': str})
 
+
 def get_code_list(index_list):
     dat = pd.DataFrame()
     for index in index_list:
@@ -38,15 +41,18 @@ def get_code_list(index_list):
     codelist += ['sh', 'sz', 'hs300']
     return codelist
 
+
 def get_prevclose(df):
     df['prevclose'] = df.close.shift(1)
     return df
+
 
 def rolling_operation(func, windowlen, col, newcol):
     def f(df):
         df[newcol] = func(arg=df[col], window=windowlen, min_periods=windowlen).tolist()
         return df
     return f
+
 
 def enrich(pxorig):
     logger.info('Enriching price data')
@@ -92,6 +98,7 @@ def enrich(pxorig):
     logger.info('Finish enriching')
     return px
 
+
 def save_price_to_csv_archive(dat):
     dates = list(set(dat['date']))
     dates.sort()
@@ -103,6 +110,7 @@ def save_price_to_csv_archive(dat):
         logger.info('Saving file to %s', filename)
         d.to_csv(filename, index=False)
 
+
 def save_price_to_csv(dat):
     dates = list(set(dat['date']))
     dates.sort()
@@ -113,16 +121,19 @@ def save_price_to_csv(dat):
         logger.info('Saving file to %s', filename)
         d.to_csv(filename, index=False)
 
+
 def get_trading_calender():
     cal = ts.trade_cal()
     cal.columns = ['date', 'isopen']
     cal.date = pd.to_datetime(cal.date, format='%Y/%m/%d', errors='ignore')
     cal.to_csv(os.path.join(datapath['misc'], 'trading_calender.csv'), index=False)
 
+
 def get_business_days():
     cal = pd.read_csv(os.path.join(datapath['misc'], 'trading_calender.csv'))
     bdays = cal[cal.isopen==1]
     bdays[['date']].to_csv(os.path.join(datapath['misc'], 'business_days.csv'), index=False)
+
 
 def update_file_days():
     logger.info('Updating file days')

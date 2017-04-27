@@ -1,12 +1,12 @@
-'''
+"""
 Test PortOpt
 
-'''
+"""
 
 import sys
 import os
 maxpath = os.path.join(os.environ['HOME'], 'max')
-sys.path.insert(0, os.path.join(maxpath, 'src'))
+sys.path.insert(0, os.path.join(maxpath, 'max'))
 import logging
 from portopt import *
 import numpy as np

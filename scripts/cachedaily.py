@@ -5,13 +5,13 @@ if len(argv) != 3:
 script, startdate, enddate = argv
 
 if len(startdate)!=10 or len(enddate)!=10:
-	raise Exception('Use yyyy-mm-dd format for startdate and enddate')
+    raise Exception('Use yyyy-mm-dd format for startdate and enddate')
 
 import sys
 import os
 maxpath = os.path.join(os.environ['HOME'], 'max')
 sys.path.insert(0, os.path.join(maxpath, 'datacache'))
-sys.path.insert(0, os.path.join(maxpath, 'src'))
+sys.path.insert(0, os.path.join(maxpath, 'max'))
 from cacheutils import *
 import logging
 

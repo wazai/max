@@ -3,50 +3,15 @@ import numpy as np
 import logging
 import os
 import matplotlib.pyplot as plt
-from datacenter import *
+from max.datacenter import DataCenter
+import max.covar.covarutil as CovarUtil
 
 logger = logging.getLogger(__name__)
 
-class Covariance:
+
+class Covar:
     
     EIGVAL_THLD = 1e-5
-
-    def ex_post_cor(self, date):
-        d = self.ret[self.ret.index <= date]
-        [T, n] = d.shape
-        if T < self.window:
-            return np.repeat(np.nan, n*n).reshape(n, n)
-        else:
-            return d.tail(self.window).corr().values
-    
-    def ex_post_cov(self, date):
-        d = self.ret[self.ret.index <= date]
-        [T, n] = d.shape
-        if T < self.window:
-            return np.repeat(np.nan, n*n).reshape(n, n)
-        else:
-            return d.tail(self.window).cov().values
-    
-    def ex_post_vol(self, date):
-        d = self.ret[self.ret.index <= date]
-        [T, n] = d.shape
-        if T < self.window:
-            return np.repeat(np.nan, n)
-        else:
-            return d.tail(self.window).std().values
-    
-    @staticmethod
-    def nancov(cor, vol):
-        voldiag = np.nan_to_num(np.diag(vol))
-        cov = voldiag.dot(np.nan_to_num(cor)).dot(voldiag)
-        cov[np.isnan(cor)] = np.nan
-        return cov
-    
-    @staticmethod
-    def nanema(s0, y1, alpha):
-        s1 = alpha*y1 + (1-alpha)*s0
-        s1[np.isnan(s0)] = y1[np.isnan(s0)]
-        return s1
 
     def __init__(self, df=pd.DataFrame(), window=90):
         logger.info('Initializing Covariance class')
@@ -61,26 +26,27 @@ class Covariance:
         logger.info('# of dates: %i, # of stocks: %i', self.ret.shape[0], self.ret.shape[1])
         logger.info('Rolling window %i days', window)
         self.window = window
-        self.get_cor_seq()
+        self.ex_post_cor, self.ex_post_vol, self.ex_post_cov = self.get_cov_seq()
     
-    def get_cor_seq(self):
+    def get_cov_seq(self):
         logger.info('Computing rolling %i-days correlation and volatility', self.window)
         [T, n] = self.ret.shape
-        self.cor = np.array([self.ex_post_cor(x) for x in self.ret.index])
-        self.vol = np.array([self.ex_post_vol(x) for x in self.ret.index])
-        self.cov = np.array([self.ex_post_cov(x) for x in self.ret.index])
+        cor = np.array([CovarUtil.ex_post_cor(self.ret, self.window, x) for x in self.ret.index])
+        vol = np.array([CovarUtil.ex_post_vol(self.ret, self.window, x) for x in self.ret.index])
+        cov = np.array([CovarUtil.ex_post_cov(self.ret, self.window, x) for x in self.ret.index])
+        return cor, vol, cov
 
     def get_ema_cov(self, alpha_cor, alpha_vol, save=False):
         logger.debug('Computing EMA covariance, alpha_cor = %.3f, alpha_vol = %.3f', alpha_cor, alpha_vol)
         T, n = self.ret.shape
-        cor_ema = self.cor.copy()
-        vol_ema = self.vol.copy()
+        cor_ema = self.ex_post_cor.copy()
+        vol_ema = self.ex_post_vol.copy()
         cov_ema = np.repeat(np.nan, T*n*n).reshape(T,n,n)
-        cov_ema[self.window-1,:,:] = self.nancov(cor_ema[self.window-1,:,:], vol_ema[self.window-1,:])
+        cov_ema[self.window-1,:,:] = CovarUtil.nan_cov(cor_ema[self.window-1,:,:], vol_ema[self.window-1,:])
         for i in range(self.window, T):
-            cor_ema[i,:,:] = self.nanema(cor_ema[i-1,:,:], self.cor[i,:,:], alpha_cor)
-            vol_ema[i,:]   = self.nanema(vol_ema[i-1,:], self.vol[i,:], alpha_vol)
-            cov_ema[i,:,:] = self.nancov(cor_ema[i,:,:], vol_ema[i,:])
+            cor_ema[i,:,:] = CovarUtil.nan_ema(cor_ema[i-1,:,:], self.ex_post_cor[i,:,:], alpha_cor)
+            vol_ema[i,:]   = CovarUtil.nan_ema(vol_ema[i-1,:], self.ex_post_vol[i,:], alpha_vol)
+            cov_ema[i,:,:] = CovarUtil.nan_cov(cor_ema[i,:,:], vol_ema[i,:])
         if save:
             self.cor_ema = cor_ema
             self.vol_ema = vol_ema
@@ -90,7 +56,7 @@ class Covariance:
     def compute_log_likelihood(self, cov, ipos, jpos, lag=1):
         logger.debug('Computing log likelihood')
         T = self.ret.shape[0]
-        X = np.nan_to_num(self.ret.values.copy()) # fill nan with 0
+        X = np.nan_to_num(self.ret.values.copy())  # fill nan with 0
         loglik = 0
         cnt = 0
         for i in range(self.window, T-lag):
@@ -151,7 +117,7 @@ class Covariance:
 
     def plot_ema_vol(self, i):
         plt.figure()
-        plot = pd.Series(self.vol[self.window:,i], index=self.ret.index[self.window:]).plot(style='b', legend=True)
+        pd.Series(self.ex_post_vol[self.window:,i], index=self.ret.index[self.window:]).plot(style='b', legend=True)
         plot = pd.Series(self.vol_ema[self.window:,i], index=self.ret.index[self.window:]).plot(style='g', legend=True)
         plt.legend(['Ex post', 'EMA'])
         plot.set_ylabel('Daily Vol')
@@ -159,10 +125,10 @@ class Covariance:
     
     def plot_ema_cor(self, i, j):
         plt.figure()
-        plot = pd.Series(self.cor[self.window:,i,j], index=self.ret.index[self.window:]).plot(style='b', legend=True)
+        pd.Series(self.ex_post_cor[self.window:,i,j], index=self.ret.index[self.window:]).plot(style='b', legend=True)
         plot = pd.Series(self.cor_ema[self.window:,i,j], index=self.ret.index[self.window:]).plot(style='g', legend=True)
-        plt.legend(['Ex post', 'EMA'])
         plot.set_ylabel('Daily Return Correlation')
+        plt.legend(['Ex post', 'EMA'])
         plt.show()
     
     def to_csv(self, cov, folder):

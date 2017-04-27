@@ -6,6 +6,7 @@ import networkx as nx
 import datetime as dt
 from sklearn import linear_model
 
+
 class Alpha(object):
     """Object that contains calibration of alpha and connection between alphas"""
     '''
@@ -254,6 +255,7 @@ class Alpha(object):
 
         self.clean_historic_data()
 
+
 class Rule(object):
 
     def cal_position(self,alpha):
@@ -261,6 +263,7 @@ class Rule(object):
             return []
 
         return [ 1 if x > 0 else -1 for x in alpha ]
+
 
 class Backtester(object):
 
