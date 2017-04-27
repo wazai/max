@@ -4,7 +4,7 @@ import logging
 import os
 import matplotlib.pyplot as plt
 from max.datacenter import DataCenter
-import max.covar.covarutil as CovarUtil
+import max.covar.util as CovarUtil
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class Covar:
         plt.figure()
         plot = pd.Series(self.loglik_path[:,i,j], index=self.ret.index).plot()
         plot.set_ylabel('Log Likelihood')
-        plot.set_title('alpha_cor='+str(self.alpha_cor_candidates[i]))
+        plot.set_title('alpha_cor='+str(self.alpha_cor_candidates[i])+', alpha_vol='+str(self.alpha_vol_candidates[j]))
         plt.show()
     
     def calibrate(self, alphas_cor, alphas_vol):
