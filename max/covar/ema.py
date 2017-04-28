@@ -1,3 +1,7 @@
+"""
+Exponential Moving Average
+"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -101,18 +105,3 @@ class EMA(Covar):
         self.plot_likelihood_path(max_idx[0][0], max_idx[0][1])
         logger.info('Optimal solution: alpha_cor = %.2f, alpha_vol = %.2f, avg loglik = %.2f',
                     self.parameters['alpha_cor'], self.parameters['alpha_vol'], log_lik.max())
-
-    def plot_fit(self, variable, i, j=None):
-        if variable not in ['cov', 'cor', 'vol']:
-            raise Exception('variable not valid')
-        if variable == 'vol':
-            ex_post_series = self.ex_post[variable][self.window:, i]
-            fit_series = self.fit[variable][self.window:, i]
-        else:
-            if j is None:
-                raise Exception('Need to provide both i and j for cor/cov plot')
-            else:
-                ex_post_series = self.ex_post[variable][self.window:, i, j]
-                fit_series = self.fit[variable][self.window:, i, j]
-        util.plot_fit(ex_post_series, fit_series, self.return_.index[self.window:],
-                      y_label=variable, legend=['Ex Post', self.name])
