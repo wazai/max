@@ -3,7 +3,7 @@ import logging
 from max.datacenter import DataCenter
 from max.covar.covar import Covar
 from max.covar.ema import EMA
-
+import max.covar.util as util
 
 # change the level to logging.DEBUG to see more log
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(name)s  %(levelname)s  %(message)s')
@@ -17,8 +17,8 @@ df = df[df.code.isin(dc.univ_dict['sz50']['code'])]
 
 c = Covar(df, 180)
 
-c.plot_fit('cor', 0, 1)  # empirical correlation of 浦发银行 and 民生银行
-c.plot_fit('vol', 0)     # empirical volatility of 浦发银行
+c.plot_ex_post('cor', 0, 1)  # empirical correlation of 浦发银行 and 民生银行
+c.plot_ex_post('vol', 0)     # empirical volatility of 浦发银行
 
 # ---------
 # test EMA
@@ -28,5 +28,5 @@ e = EMA(df, 180)
 alphas = np.linspace(0, 1, 11)
 
 e.calibrate(alphas, alphas)
-e.plot_fit('cor', 0, 1)  # compare EMA vs ex-post correlation of 浦发银行 and 民生银行
-e.plot_fit('vol', 0)     # compare EMA vs ex-post volatility of 浦发银行
+util.plot_fit(e, 'cor', 0, 1)  # compare EMA vs ex-post correlation of 浦发银行 and 民生银行
+util.plot_fit(e, 'vol', 0)     # compare EMA vs ex-post volatility of 浦发银行

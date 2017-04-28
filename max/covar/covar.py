@@ -49,7 +49,7 @@ class Covar(object):
             logger.info('Saving file to %s', filename)
             d.to_csv(filename, index=False)
 
-    def plot_fit(self, variable, i, j=None):
+    def plot_ex_post(self, variable, i, j=None):
         if variable not in ['cov', 'cor', 'vol']:
             raise Exception('variable not valid')
         if variable == 'vol':
@@ -59,4 +59,4 @@ class Covar(object):
                 raise Exception('Need to provide both i and j for cor/cov plot')
             else:
                 ex_post_series = self.ex_post[variable][self.window:, i, j]
-        util.plot_fit(ex_post_series, index=self.return_.index[self.window:], y_label=variable, legend=[self.name])
+        util.plot_series(ex_post_series, index=self.return_.index[self.window:], y_label=variable, legend=[self.name])
