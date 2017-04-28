@@ -31,21 +31,21 @@ class DataCenter(object):
         return paths[name]
 
     @staticmethod
-    def get_business_days(bday_t = 'business'):
+    def get_business_days(bday_t='business'):
         logger.info('Loading business days')
         paths = DataCenter.get_all_paths()
         bdays = pd.read_csv(os.path.join(paths['misc'], bday_t+'_days.csv'),dtype={'date':str})
         return bdays['date'].values
 
     @staticmethod
-    def get_business_days_within(yyyymmdd, nbackward, nforward):
+    def get_business_days_within(yyyymmdd, n_backward, n_forward):
         dates = DataCenter.get_business_days()
         pos = np.argmax(dates>yyyymmdd)
         if pos == 0:
             logger.warning('Input date outside the range of current business days')
             pos = len(dates)
-        nforward = min(nforward, len(dates)-pos)
-        return dates[pos-nbackward:pos+nforward]
+        n_forward = min(n_forward, len(dates)-pos)
+        return dates[pos-n_backward:pos+n_forward]
 
     def get_business_days_start_end(self, start_date, end_date):
         res = self.price.set_index('date')
@@ -58,7 +58,6 @@ class DataCenter(object):
         self.business_days = self.get_business_days(bday_t='file')
         self._load_daily_price(startdate, enddate)
 
-        # Get start and end dates of DataCenter
         if self.price.empty:
             self.start_date = ''
             self.end_date = ''
