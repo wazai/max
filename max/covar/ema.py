@@ -23,7 +23,7 @@ class EMA(Covar):
 
     def get_ema_cov(self, alpha_cor, alpha_vol, save=False):
         logger.debug('Computing EMA covariance, alpha_cor = %.3f, alpha_vol = %.3f', alpha_cor, alpha_vol)
-        n_dates, n_stocks = self.ret.shape
+        n_dates, n_stocks = self.return_.shape
         cor_ema = self.ex_post['cor'].copy()
         vol_ema = self.ex_post['vol'].copy()
         cov_ema = np.repeat(np.nan, n_dates * n_stocks * n_stocks).reshape(n_dates, n_stocks, n_stocks)
@@ -40,8 +40,8 @@ class EMA(Covar):
 
     def compute_log_likelihood(self, cov, i_pos, j_pos, lag=1):
         logger.debug('Computing log likelihood')
-        n_dates = self.ret.shape[0]
-        X = np.nan_to_num(self.ret.values.copy())  # fill nan with 0
+        n_dates = self.return_.shape[0]
+        X = np.nan_to_num(self.return_.values.copy())  # fill nan with 0
         log_lik = 0
         cnt = 0
         for i in range(self.window, n_dates - lag):
@@ -71,7 +71,7 @@ class EMA(Covar):
 
     def plot_likelihood_path(self, i, j):
         plt.figure()
-        plot = pd.Series(self.results['log_lik_path'][:, i, j], index=self.ret.index).plot()
+        plot = pd.Series(self.results['log_lik_path'][:, i, j], index=self.return_.index).plot()
         plot.set_ylabel('Log Likelihood')
         plot.set_title(
             'alpha_cor=' + str(self.parameter_candidates['alpha_cor'][i]) +
@@ -83,7 +83,7 @@ class EMA(Covar):
         n_cor = np.size(alphas_cor)
         n_vol = np.size(alphas_vol)
         log_lik = np.repeat(np.nan, n_cor * n_vol).reshape(n_cor, n_vol)
-        n_dates = self.ret.shape[0]
+        n_dates = self.return_.shape[0]
         self.results['log_lik_path'] = np.repeat(np.nan, n_cor*n_vol*n_dates).reshape(n_dates, n_cor, n_vol)
         self.results['cov_det_path'] = np.repeat(np.nan, n_cor*n_vol*n_dates).reshape(n_dates, n_cor, n_vol)
         for i in range(n_cor):
@@ -114,4 +114,5 @@ class EMA(Covar):
             else:
                 ex_post_series = self.ex_post[variable][self.window:, i, j]
                 fit_series = self.fit[variable][self.window:, i, j]
-        util.plot_fit(ex_post_series, fit_series, self.ret.index[self.window:], y_label=variable, legend=['Ex Post', self.name])
+        util.plot_fit(ex_post_series, fit_series, self.return_.index[self.window:],
+                      y_label=variable, legend=['Ex Post', self.name])
