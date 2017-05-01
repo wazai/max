@@ -96,5 +96,4 @@ class Covar(object):
         self.result_candidate = pd.DataFrame(results)
         metric.plot_value_path(self.return_.index, self.result['value_path'])
         metric.plot_candidate_performance(self.parameter_candidate, self.result_candidate)
-        logger.info('Optimal solution: alpha_cor = %.2f, alpha_vol = %.2f, avg log_lik = %.2f',
-                    self.parameter['alpha_cor'], self.parameter['alpha_vol'], self.result['value'])
+        logger.info('Optimal parameter: %s, %s value = %.2f', str(self.parameter), metric.method, self.result['value'])
