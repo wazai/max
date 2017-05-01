@@ -24,17 +24,6 @@ c = Covar(df, 180)
 c.plot_ex_post('cor', 0, 1)  # empirical correlation of 浦发银行 and 民生银行
 c.plot_ex_post('vol', 0)     # empirical volatility of 浦发银行
 
-# ---------
-# test EMA
-
-e = EMA(df, 180)
-
-alphas = np.linspace(0, 1, 11)
-parameter = {'alpha_cor': alphas, 'alpha_vol': alphas}
-e.calibrate(parameter)
-util.plot_estimate(e, 'cor', 0, 1)  # compare EMA vs ex-post correlation of 浦发银行 and 民生银行
-util.plot_estimate(e, 'vol', 0)     # compare EMA vs ex-post volatility of 浦发银行
-
 # --------------------
 # test EMA new design
 
@@ -46,14 +35,5 @@ parameter_candidate = pd.DataFrame(np.array(np.meshgrid(alphas, alphas)).T.resha
 e.calibrate(parameter_candidate, metric)
 util.plot_estimate(e, 'cor', 0, 1)  # compare EMA vs ex-post correlation of 浦发银行 and 民生银行
 util.plot_estimate(e, 'vol', 0)     # compare EMA vs ex-post volatility of 浦发银行
-
-
-# ---------
-# test SIS
-
-df = dc.price[['date', 'code', 'return']]
-df = df[df.code.isin(dc.univ_dict['sz50']['code'].tolist()+['sh'])]
-
-s = SIS(df, 180, 'sh')
 
 
