@@ -1,12 +1,13 @@
 """
 Utility functions for Covar class
-
 """
-
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def ex_post_cor(ret, window, date):
@@ -59,17 +60,18 @@ def plot_series(series1, series2=None, index=None, y_label=None, legend=None):
     plt.show()
 
 
-def plot_fit(obj, variable, i, j=None):
+def plot_estimate(obj, variable, i, j=None):
+    logger.info('Plotting %s fitted %s', obj.name, variable)
     if variable not in ['cov', 'cor', 'vol']:
         raise Exception('variable not valid')
     if variable == 'vol':
         ex_post_series = obj.ex_post[variable][obj.window:, i]
-        fit_series = obj.fit[variable][obj.window:, i]
+        fit_series = obj.estimate[variable][obj.window:, i]
     else:
         if j is None:
             raise Exception('Need to provide both i and j for cor/cov plot')
         else:
             ex_post_series = obj.ex_post[variable][obj.window:, i, j]
-            fit_series = obj.fit[variable][obj.window:, i, j]
+            fit_series = obj.estimate[variable][obj.window:, i, j]
     plot_series(ex_post_series, fit_series, obj.return_.index[obj.window:],
                 y_label=variable, legend=['Ex Post', obj.name])

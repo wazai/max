@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import logging
 import os
+import abc
 from max.datacenter import DataCenter
 import max.covar.util as util
 
@@ -26,13 +27,22 @@ class Covar(object):
         logger.info('Rolling window %i days', window)
         self.window = window
         self.ex_post = dict()
-        self._get_cov_seq()
+        self._cal_ex_post()
+        self.parameter = dict()
+        self.parameter_candidate = dict()
+        self.result = dict()
+        self.result_candidate = pd.DataFrame()
+        self.estimate = self.ex_post
 
-    def _get_cov_seq(self):
+    def _cal_ex_post(self):
         logger.info('Computing rolling %i-days correlation and volatility', self.window)
         self.ex_post['cor'] = np.array([util.ex_post_cor(self.return_, self.window, x) for x in self.return_.index])
         self.ex_post['vol'] = np.array([util.ex_post_vol(self.return_, self.window, x) for x in self.return_.index])
         self.ex_post['cov'] = np.array([util.ex_post_cov(self.return_, self.window, x) for x in self.return_.index])
+
+    def _check_parameter(self, parameter):
+        if set(parameter) != set(self.parameter):
+            raise Exception('Input parameter dictionary does not match class parameter dictionary')
 
     def to_csv(self, cov, folder):
         logger.info('Saving files to csv')
@@ -62,3 +72,29 @@ class Covar(object):
             else:
                 ex_post_series = self.ex_post[variable][self.window:, i, j]
         util.plot_series(ex_post_series, index=self.return_.index[self.window:], y_label=variable, legend=['Ex Post'])
+
+    @abc.abstractmethod
+    def cal_estimate(self, parameter):
+        return
+
+    def calibrate(self, parameter_candidate, metric):
+        logger.info('Calibrating parameter using %s', metric.method)
+        if type(parameter_candidate) == pd.core.frame.DataFrame:
+            self.parameter_candidate = parameter_candidate
+            parameter_candidate = parameter_candidate.to_dict('record')
+        else:
+            self.parameter_candidate = pd.DataFrame(parameter_candidate)
+        results = []
+        for parameter in parameter_candidate:
+            estimate = self.cal_estimate(parameter)
+            result = metric.evaluate(estimate['cov'], self.return_, self.window)
+            results.append(result)
+            if np.isnan(self.result['value']) or metric.is_better(result, self.result):
+                self.parameter = parameter
+                self.result = result
+                self.estimate = estimate
+        self.result_candidate = pd.DataFrame(results)
+        metric.plot_value_path(self.return_.index, self.result['value_path'])
+        metric.plot_candidate_performance(self.parameter_candidate, self.result_candidate)
+        logger.info('Optimal solution: alpha_cor = %.2f, alpha_vol = %.2f, avg log_lik = %.2f',
+                    self.parameter['alpha_cor'], self.parameter['alpha_vol'], self.result['value'])
