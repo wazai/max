@@ -3,7 +3,7 @@ import numpy as np
 import logging
 import os
 import abc
-from max.datacenter import DataCenter
+from max.datacenter.datapath import DataPath
 import max.covar.util as util
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class Covar(object):
 
     def to_csv(self, cov, folder):
         logger.info('Saving files to csv')
-        path = os.path.join(DataCenter.get_path('covariance'), folder)
+        path = os.path.join(DataPath().get_path('covariance'), folder)
         cols = self.return_.columns
         for i in range(self.window, self.n_dates):
             d = pd.DataFrame(cov[i, :, :], columns=cols)

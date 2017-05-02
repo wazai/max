@@ -2,11 +2,11 @@ import logging
 import numpy as np
 import pandas as pd
 
-from max.datacenter import DataCenter
+from max.datacenter.datacenter import DataCenter
 from max.covar.covar import Covar
 from max.covar.ema import EMA
 from max.covar.metric import Metric
-#from max.covar.sis import SIS
+from max.covar.sis import SIS
 import max.covar.util as util
 
 # change the level to logging.DEBUG to see more log
@@ -36,4 +36,11 @@ e.calibrate(parameter_candidate, metric)
 util.plot_estimate(e, 'cor', 0, 1)  # compare EMA vs ex-post correlation of 浦发银行 and 民生银行
 util.plot_estimate(e, 'vol', 0)     # compare EMA vs ex-post volatility of 浦发银行
 
+# ---------
+# test SIS
+
+df = dc.price[['date', 'code', 'return']]
+df = df[df.code.isin(dc.univ_dict['sz50']['code'].tolist()+['sh'])]
+
+s = SIS(df, 180, 'sh')
 
