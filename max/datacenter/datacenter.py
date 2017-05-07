@@ -65,5 +65,4 @@ class DataCenter(object):
         return pivot[start_date:end_date]
 
     def get_business_days_start_end(self, start_date, end_date):
-        res = self.price.set_index('date')
-        return res[start_date:end_date].index.unique()
+        return self.price[start_date:end_date].index.unique()
