@@ -28,9 +28,11 @@ class DataCenter(object):
         if self.price.empty:
             self.start_date = ''
             self.end_date = ''
+            self.code_name_dict = dict()
         else:
             self.start_date = self.price.index.min()
             self.end_date = self.price.index.max()
+            self.code_name_dict = dict(zip(self.price.code, self.price.name))
 
         self.univ_dict = dict()
         univ_file_names = os.listdir(self.paths['univ'])
