@@ -1,17 +1,12 @@
-import numpy as np
-import numpy.random as npr
 import pandas as pd
-import matplotlib.pyplot as plt
-import networkx as nx
-import datetime as dt
+
 class Rule(object):
 
-    def cal_position(self, alpha):
+    def cal_position(self, alpha, **k):
         if not len(alpha):
             return []
 
         return [ 1 if x > 0 else -1 for x in alpha ]
-
 
 class Backtester(object):
 

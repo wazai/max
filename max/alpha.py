@@ -122,14 +122,11 @@ class Alpha(object):
     '''
     def get_benchmark(self, start_date, end_date):
         '''get benchmark return'''
-        # for test only, will be override in derived nodes
-        dates = self.datacenter.get_business_days_start_end(start_date, end_date)
-        self.benchmark = pd.Series(npr.randn(len(dates))/10, index=dates)
+        self.benchmark = self.datacenter.load_codes_return(['sh'],self.start_date,self.end_date)
 
     def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
         # dates = pd.date_range(str(start_date), str(end_date) )
-        # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.universe))+0.5, index=dates)
         self.historic_mkt_return = self.datacenter.load_codes_return(self.universe, start_date, end_date)
 
     def get_historic_position(self, start_date, end_date):
@@ -232,28 +229,28 @@ class Alpha(object):
     ------------------------------
     '''
 
-    def backtest(self, start_date=None, end_date=None):
-
-        logger.info('Running backtester ... ')
-
-        if start_date is None: start_date = self.start_date
-        if end_date is None: end_date = self.end_date
-
-        self.clean_historic_data()
-
-        dates = pd.date_range(start_date, end_date)
-
-        res = pd.DataFrame(columns=self.universe)
-        for date in dates:
-            tmp_alpha = self.get_alpha(date)
-            tmp_dict = dict(zip(self.universe, tmp_alpha))
-            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
-            res.append(tmp_df)
-
-        self.historic_position= res
-        self.get_benchmark(start_date, end_date)
-        self.get_historic_position_return(start_date, end_date)
-        self.plot_return()
-        self.metrics()
-
-        self.clean_historic_data()
+    # def backtest(self, start_date=None, end_date=None):
+    #
+    #     logger.info('Running backtester ... ')
+    #
+    #     if start_date is None: start_date = self.start_date
+    #     if end_date is None: end_date = self.end_date
+    #
+    #     self.clean_historic_data()
+    #
+    #     dates = pd.date_range(start_date, end_date)
+    #
+    #     res = pd.DataFrame(columns=self.universe)
+    #     for date in dates:
+    #         tmp_alpha = self.get_alpha(date)
+    #         tmp_dict = dict(zip(self.universe, tmp_alpha))
+    #         tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
+    #         res.append(tmp_df)
+    #
+    #     self.historic_position= res
+    #     self.get_benchmark(start_date, end_date)
+    #     self.get_historic_position_return(start_date, end_date)
+    #     self.plot_return()
+    #     self.metrics()
+    #
+    #     self.clean_historic_data()
