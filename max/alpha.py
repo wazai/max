@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import datetime as dt
 from sklearn import linear_model
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Alpha(object):
@@ -16,7 +19,7 @@ class Alpha(object):
     '''
 
     def __init__(self, name, space, datacenter):
-
+        logger.info('Initializing Alpha base class')
         # inputs
         self.__name__ = name
         self.space = space
@@ -36,7 +39,7 @@ class Alpha(object):
         self.benchmark = pd.Series()
         self.historic_position_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
-        self.historic_position= pd.DataFrame(columns=self.space)
+        self.historic_position = pd.DataFrame(columns=self.space)
 
     def is_leaf(self):
         return len(self.children) == 0
@@ -102,7 +105,7 @@ class Alpha(object):
             self.get_alpha()
 
         # simple buy sell position
-        self.position = [ 1 if x > 0 else -1 for x in self.alpha ]
+        self.position = [1 if x > 0 else -1 for x in self.alpha]
 
     def clean_historic_data(self):
         '''clean up all historic data. this should be used before backtest'''
@@ -132,7 +135,7 @@ class Alpha(object):
     def get_historic_position(self, start_date, end_date):
         '''
         get historic alpha from storage, this is different from the backtester where we generate
-        historic_positionon the fly
+        historic_position on the fly
         '''
         dates = self.datacenter.get_business_days_start_end(start_date, end_date)
         self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
@@ -176,8 +179,8 @@ class Alpha(object):
 
         reg = linear_model.LinearRegression()
         reg.fit(x,y)
-        [[ m_beta ]] = reg.coef_
-        [ m_alpha ]  = reg.intercept_
+        [[m_beta]] = reg.coef_
+        [m_alpha] = reg.intercept_
 
         print('alpha: ', m_alpha)
         print('beta:  ', m_beta)
@@ -203,7 +206,7 @@ class Alpha(object):
         '''draw graph of all alphas, will move this out to a library'''
 
         G = nx.Graph()
-        stack = [ self ]
+        stack = [self]
 
         while stack:
             node = stack.pop()
@@ -231,10 +234,10 @@ class Alpha(object):
 
     def backtest(self, start_date=None, end_date=None):
 
-        print('Running backtester ... ')
+        logger.info('Running backtester ... ')
 
-        if start_date == None: start_date = self.start_date
-        if end_date == None: end_date = self.end_date
+        if start_date is None: start_date = self.start_date
+        if end_date is None: end_date = self.end_date
 
         self.clean_historic_data()
 
@@ -262,7 +265,7 @@ class Rule(object):
         if not len(alpha):
             return []
 
-        return [ 1 if x > 0 else -1 for x in alpha ]
+        return [1 if x > 0 else -1 for x in alpha]
 
 
 class Backtester(object):
@@ -273,10 +276,9 @@ class Backtester(object):
         self.start_date = alpha.start_date
         self.end_date = alpha.end_date
 
-
     def backtest(self):
 
-        print('Running backtester ... ')
+        logger.info('Running backtester ... ')
 
         dates = self.alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
 
@@ -288,7 +290,7 @@ class Backtester(object):
             tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res = res.append(tmp_df)
 
-        self.alpha.historic_position= res
+        self.alpha.historic_position = res
         self.alpha.get_benchmark(self.start_date, self.end_date)
         self.alpha.get_historic_position_return(self.start_date, self.end_date)
         self.alpha.plot_return()
