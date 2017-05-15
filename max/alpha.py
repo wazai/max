@@ -278,7 +278,7 @@ class Backtester(object):
 
         print('Running backtester ... ')
 
-        dates = pd.date_range(self.start_date, self.end_date)
+        dates = self.alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
 
         res = pd.DataFrame(columns=self.alpha.space)
         for date in dates:
