@@ -34,9 +34,9 @@ class Alpha(object):
 
         # some historic data for backtesting and benchmarking
         self.benchmark = pd.Series()
-        self.historic_alpha_return = pd.Series()
+        self.historic_position_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
-        self.historic_alpha = pd.DataFrame(columns=self.space)
+        self.historic_position= pd.DataFrame(columns=self.space)
 
     def is_leaf(self):
         return len(self.children) == 0
@@ -88,14 +88,14 @@ class Alpha(object):
 
         self.alpha = np.average(mkt_data, axis=0)
 
-    def get_historic_alpha_return(self, start_date, end_date):
+    def get_historic_position_return(self, start_date, end_date):
         '''dot product between historic alpha and historic mkt return. be careful of the date!'''
-        if not len(self.historic_alpha):
-            self.get_historic_alpha(start_date, end_date)
+        if not len(self.historic_position):
+            self.get_historic_position(start_date, end_date)
         if not len(self.historic_mkt_return):
             self.get_historic_mkt_return(start_date, end_date)
 
-        self.historic_alpha_return = (self.historic_alpha.shift(1) * self.historic_mkt_return).sum(axis=1)
+        self.historic_position_return = (self.historic_position.shift(1) * self.historic_mkt_return).sum(axis=1)
 
     def get_position_from_alpha(self):
         if not len(self.alpha):
@@ -107,9 +107,9 @@ class Alpha(object):
     def clean_historic_data(self):
         '''clean up all historic data. this should be used before backtest'''
         self.benchmark = pd.Series()
-        self.historic_alpha_return = pd.Series()
+        self.historic_position_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.space)
-        self.historic_alpha = pd.DataFrame(columns=self.space)
+        self.historic_position= pd.DataFrame(columns=self.space)
         self.valid=0
 
     '''
@@ -129,16 +129,16 @@ class Alpha(object):
         # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
         self.historic_mkt_return = self.datacenter.load_codes_return(self.space, start_date, end_date)
 
-    def get_historic_alpha(self, start_date, end_date):
+    def get_historic_position(self, start_date, end_date):
         '''
         get historic alpha from storage, this is different from the backtester where we generate
-        historic_alpha on the fly
+        historic_positionon the fly
         '''
         dates = self.datacenter.get_business_days_start_end(start_date, end_date)
-        self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
+        self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
 
     def get_historic_position_from_alpha(self):
-        if not len(self.historic_alpha):
+        if not len(self.historic_position):
             return
 
 
@@ -158,20 +158,20 @@ class Alpha(object):
 
     def metrics(self):
         '''use benchmark and historic return to calculate metrics'''
-        if not len(self.historic_alpha_return):
-            self.get_historic_alpha_return(self.start_date, self.end_date)
+        if not len(self.historic_position_return):
+            self.get_historic_position_return(self.start_date, self.end_date)
         if not len(self.benchmark):
             self.get_benchmark(self.start_date, self.end_date)
 
         # simple sharp
-        sharp = self.historic_alpha_return[1:].mean() / self.historic_alpha_return[1:].std()
+        sharp = self.historic_position_return[1:].mean() / self.historic_position_return[1:].std()
 
         print('--------- Alpha Metrics --------')
         print('sharp: ', sharp)
 
         # simple alpha/beta
         size = len(self.benchmark) - 1
-        x = self.historic_alpha_return[1:].values.reshape(size, 1)
+        x = self.historic_position_return[1:].values.reshape(size, 1)
         y = self.benchmark[1:].values.reshape(size, 1)
 
         reg = linear_model.LinearRegression()
@@ -184,14 +184,14 @@ class Alpha(object):
 
     def plot_return(self):
 
-        if not len(self.historic_alpha_return):
-            self.get_historic_alpha_return(self.start_date,self.end_date)
+        if not len(self.historic_position_return):
+            self.get_historic_position_return(self.start_date,self.end_date)
         if not len(self.benchmark):
             self.get_benchmark(self.start_date,self.end_date)
 
         plt.figure()
         plot = self.benchmark.cumsum().plot(style='b', legend=True)
-        plot = self.historic_alpha_return.cumsum().plot(style='g', legend=True)
+        plot = self.historic_position_return.cumsum().plot(style='g', legend=True)
         plt.legend(['Benchmark','Alpha'])
         # plot = self.historic_return.plot(secondary_y=True)
         # plot = self.benchmark.plot(secondary_y=True)
@@ -247,9 +247,9 @@ class Alpha(object):
             tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res.append(tmp_df)
 
-        self.historic_alpha = res
+        self.historic_position= res
         self.get_benchmark(start_date, end_date)
-        self.get_historic_alpha_return(start_date, end_date)
+        self.get_historic_position_return(start_date, end_date)
         self.plot_return()
         self.metrics()
 
@@ -288,9 +288,9 @@ class Backtester(object):
             tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res = res.append(tmp_df)
 
-        self.alpha.historic_alpha = res
+        self.alpha.historic_position= res
         self.alpha.get_benchmark(self.start_date, self.end_date)
-        self.alpha.get_historic_alpha_return(self.start_date, self.end_date)
+        self.alpha.get_historic_position_return(self.start_date, self.end_date)
         self.alpha.plot_return()
         self.alpha.metrics()
 
