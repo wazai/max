@@ -68,7 +68,6 @@ class Alpha(object):
             for child in self.children:
                 res.append(child.get_alpha(date))
             self.alpha = self.blend(res)
-            self.valid = 1
 
             return self.alpha
 
@@ -80,7 +79,7 @@ class Alpha(object):
         '''Calculate alpha based on mkt data'''
         # for test only, will be override in derived nodes
 
-        days = 3
+        days = 5
         start_date = date - dt.timedelta(days=days)
         dates = pd.date_range(str(start_date), periods=days)
         mkt_data = pd.DataFrame(npr.randn(days, len(self.universe)), index=dates, columns=self.universe)

@@ -6,7 +6,7 @@ class Rule(object):
         if not len(alpha):
             return []
 
-        return [ 1 if x > 0 else -1 for x in alpha ]
+        return [ 1 if x > 0 else 0 for x in alpha ]
 
 class RuleOpt(object):
 
@@ -42,4 +42,4 @@ class Backtester(object):
         self.alpha.plot_return()
         self.alpha.metrics()
 
-        self.alpha.clean_historic_data()
+ #       self.alpha.clean_historic_data()
