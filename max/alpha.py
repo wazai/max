@@ -229,28 +229,28 @@ class Alpha(object):
     ------------------------------
     '''
 
-    def backtest(self, start_date=None, end_date=None):
-
-        logger.info('Running backtester ... ')
-
-        if start_date is None: start_date = self.start_date
-        if end_date is None: end_date = self.end_date
-
-        self.clean_historic_data()
-
-        dates = pd.date_range(start_date, end_date)
-
-        res = pd.DataFrame(columns=self.universe)
-        for date in dates:
-            tmp_alpha = self.get_alpha(date)
-            tmp_dict = dict(zip(self.universe, tmp_alpha))
-            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
-            res.append(tmp_df)
-
-        self.historic_position= res
-        self.get_benchmark(start_date, end_date)
-        self.get_historic_position_return(start_date, end_date)
-        self.plot_return()
-        self.metrics()
-
-        self.clean_historic_data()
+    # def backtest(self, start_date=None, end_date=None):
+    #
+    #     logger.info('Running backtester ... ')
+    #
+    #     if start_date is None: start_date = self.start_date
+    #     if end_date is None: end_date = self.end_date
+    #
+    #     self.clean_historic_data()
+    #
+    #     dates = pd.date_range(start_date, end_date)
+    #
+    #     res = pd.DataFrame(columns=self.universe)
+    #     for date in dates:
+    #         tmp_alpha = self.get_alpha(date)
+    #         tmp_dict = dict(zip(self.universe, tmp_alpha))
+    #         tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
+    #         res.append(tmp_df)
+    #
+    #     self.historic_position= res
+    #     self.get_benchmark(start_date, end_date)
+    #     self.get_historic_position_return(start_date, end_date)
+    #     self.plot_return()
+    #     self.metrics()
+    #
+    #     self.clean_historic_data()
