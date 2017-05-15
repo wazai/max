@@ -1,6 +1,7 @@
 
 import max.alpha as ap
 import max.datacenter.datacenter as dc
+import max.backtester as bt
 
 d = dc.DataCenter('2017-01-01','2017-02-01')
 codes = ['000001','000002','000009']
@@ -32,6 +33,6 @@ a.plot_return()
 # backtest
 #a.backtest('2017-01-01','2017-02-01')
 rule = ap.Rule()
-backtest = ap.Backtester(a,rule)
+backtest = bt.Backtester(a,rule)
 backtest.backtest()
 
