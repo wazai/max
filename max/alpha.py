@@ -171,8 +171,8 @@ class Alpha(object):
 
         # simple alpha/beta
         size = len(self.benchmark) - 1
-        x = self.historic_alpha_return[1:].reshape(size, 1)
-        y = self.benchmark[1:].reshape(size, 1)
+        x = self.historic_alpha_return[1:].values.reshape(size, 1)
+        y = self.benchmark[1:].values.reshape(size, 1)
 
         reg = linear_model.LinearRegression()
         reg.fit(x,y)
@@ -267,11 +267,31 @@ class Rule(object):
 
 class Backtester(object):
 
-    def __init__(self, alpha, position):
+    def __init__(self, alpha, rule):
         self.alpha = alpha
-        self.position_gen = position
+        self.rule = rule
         self.start_date = alpha.start_date
         self.end_date = alpha.end_date
 
+
     def backtest(self):
-        self.alpha.backtest(self.start_date,self.end_date)
+
+        print('Running backtester ... ')
+
+        dates = pd.date_range(self.start_date, self.end_date)
+
+        res = pd.DataFrame(columns=self.alpha.space)
+        for date in dates:
+            tmp_alpha = self.alpha.get_alpha(date)
+            tmp_position = self.rule.cal_position(tmp_alpha)
+            tmp_dict = dict(zip(self.alpha.space,tmp_position))
+            tmp_df = pd.DataFrame(data=tmp_dict,index=[date])
+            res = res.append(tmp_df)
+
+        self.alpha.historic_alpha = res
+        self.alpha.get_benchmark(self.start_date, self.end_date)
+        self.alpha.get_historic_alpha_return(self.start_date, self.end_date)
+        self.alpha.plot_return()
+        self.alpha.metrics()
+
+        self.alpha.clean_historic_data()

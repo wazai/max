@@ -23,11 +23,15 @@ a.get_alpha()
 
 # show what's in a node
 a.show()
-#a.metrics()
+a.metrics()
 
 # plot some graph
 a.draw_graph()
 a.plot_return()
 
 # backtest
-a.backtest('2017-01-01','2017-02-01')
+#a.backtest('2017-01-01','2017-02-01')
+rule = ap.Rule()
+backtest = ap.Backtester(a,rule)
+backtest.backtest()
+
