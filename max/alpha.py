@@ -122,14 +122,11 @@ class Alpha(object):
     '''
     def get_benchmark(self, start_date, end_date):
         '''get benchmark return'''
-        # for test only, will be override in derived nodes
-        dates = self.datacenter.get_business_days_start_end(start_date, end_date)
-        self.benchmark = pd.Series(npr.randn(len(dates))/10, index=dates)
+        self.benchmark = self.datacenter.load_codes_return(['sh'],self.start_date,self.end_date)
 
     def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
         # dates = pd.date_range(str(start_date), str(end_date) )
-        # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.universe))+0.5, index=dates)
         self.historic_mkt_return = self.datacenter.load_codes_return(self.universe, start_date, end_date)
 
     def get_historic_position(self, start_date, end_date):
