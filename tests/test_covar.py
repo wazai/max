@@ -6,7 +6,7 @@ from max.datacenter.datacenter import DataCenter
 from max.covar.covar import Covar
 from max.covar.ema import EMA
 from max.covar.metric import Metric
-from max.covar.sis import SIS
+#from max.covar.sis import SIS
 import max.covar.util as util
 
 # change the level to logging.DEBUG to see more log
@@ -42,5 +42,5 @@ util.plot_estimate(e, 'vol', 0)     # compare EMA vs ex-post volatility of Êµ¶Âè
 df = dc.price[['date', 'code', 'return']]
 df = df[df.code.isin(dc.univ_dict['sz50']['code'].tolist()+['sh'])]
 
-s = SIS(df, 180, 'sh')
+#s = SIS(df, 180, 'sh')
 
