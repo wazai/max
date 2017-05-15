@@ -61,12 +61,8 @@ class Alpha(object):
         '''get alpha from cal if it is a leaf node,
         otherwise blend children alphas into one'''
         if self.is_leaf():
-            if self.valid == 1:
-                return self.alpha
-            else:
-                self.cal(date)
-                self.valid = 1
-                return self.alpha
+            self.cal(date)
+            return self.alpha
         else:
             res = []
             for child in self.children:
@@ -184,7 +180,6 @@ class Alpha(object):
         if not len(self.benchmark):
             self.get_benchmark(self.start_date,self.end_date)
 
-        #plt.figure()
         self.benchmark.cumsum().plot(style='b', legend=True)
         plot = self.historic_position_return.cumsum().plot(style='g', legend=True)
         plt.legend(['Benchmark','Alpha'])
