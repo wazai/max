@@ -184,12 +184,10 @@ class Alpha(object):
         if not len(self.benchmark):
             self.get_benchmark(self.start_date,self.end_date)
 
-        plt.figure()
-        plot = self.benchmark.cumsum().plot(style='b', legend=True)
+        #plt.figure()
+        self.benchmark.cumsum().plot(style='b', legend=True)
         plot = self.historic_position_return.cumsum().plot(style='g', legend=True)
         plt.legend(['Benchmark','Alpha'])
-        # plot = self.historic_return.plot(secondary_y=True)
-        # plot = self.benchmark.plot(secondary_y=True)
         plot.set_ylabel('Return')
 
         plt.show()
