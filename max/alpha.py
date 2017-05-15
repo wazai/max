@@ -137,11 +137,6 @@ class Alpha(object):
         dates = self.datacenter.get_business_days_start_end(start_date, end_date)
         self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.universe)), columns=self.universe, index=dates)
 
-    def get_historic_position_from_alpha(self):
-        if not len(self.historic_position):
-            return
-
-
     '''
     ------------------------------
         Display functions
