@@ -84,7 +84,7 @@ class Alpha(object):
         days = 3
         start_date = date - dt.timedelta(days=days)
         dates = pd.date_range(str(start_date), periods=days)
-        mkt_data = pd.DataFrame(npr.randn(days,len(self.space)), index=dates, columns=self.space)
+        mkt_data = pd.DataFrame(npr.randn(days, len(self.space)), index=dates, columns=self.space)
 
         self.alpha = np.average(mkt_data, axis=0)
 
@@ -120,21 +120,21 @@ class Alpha(object):
     def get_benchmark(self, start_date, end_date):
         '''get benchmark return'''
         # for test only, will be override in derived nodes
-        dates = self.datacenter.get_business_days_start_end(start_date,end_date)
+        dates = self.datacenter.get_business_days_start_end(start_date, end_date)
         self.benchmark = pd.Series(npr.randn(len(dates))/10, index=dates)
 
     def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
         # dates = pd.date_range(str(start_date), str(end_date) )
         # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
-        self.historic_mkt_return = self.datacenter.load_codes_return(self.space,start_date,end_date)
+        self.historic_mkt_return = self.datacenter.load_codes_return(self.space, start_date, end_date)
 
     def get_historic_alpha(self, start_date, end_date):
         '''
         get historic alpha from storage, this is different from the backtester where we generate
         historic_alpha on the fly
         '''
-        dates = self.datacenter.get_business_days_start_end(start_date,end_date)
+        dates = self.datacenter.get_business_days_start_end(start_date, end_date)
         self.historic_alpha = pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
 
     def get_historic_position_from_alpha(self):
@@ -159,7 +159,7 @@ class Alpha(object):
     def metrics(self):
         '''use benchmark and historic return to calculate metrics'''
         if not len(self.historic_alpha_return):
-            self.get_historic_alpha_return(self.start_date,self.end_date)
+            self.get_historic_alpha_return(self.start_date, self.end_date)
         if not len(self.benchmark):
             self.get_benchmark(self.start_date, self.end_date)
 
@@ -190,8 +190,8 @@ class Alpha(object):
             self.get_benchmark(self.start_date,self.end_date)
 
         plt.figure()
-        plot = self.benchmark.cumsum().plot(style='b',legend=True)
-        plot = self.historic_alpha_return.cumsum().plot(style='g',legend=True)
+        plot = self.benchmark.cumsum().plot(style='b', legend=True)
+        plot = self.historic_alpha_return.cumsum().plot(style='g', legend=True)
         plt.legend(['Benchmark','Alpha'])
         # plot = self.historic_return.plot(secondary_y=True)
         # plot = self.benchmark.plot(secondary_y=True)
@@ -243,8 +243,8 @@ class Alpha(object):
         res = pd.DataFrame(columns=self.space)
         for date in dates:
             tmp_alpha = self.get_alpha(date)
-            tmp_dict = dict(zip(self.space,tmp_alpha))
-            tmp_df = pd.DataFrame(data=tmp_dict,index=[date])
+            tmp_dict = dict(zip(self.space, tmp_alpha))
+            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res.append(tmp_df)
 
         self.historic_alpha = res
@@ -258,7 +258,7 @@ class Alpha(object):
 
 class Rule(object):
 
-    def cal_position(self,alpha):
+    def cal_position(self, alpha):
         if not len(alpha):
             return []
 
@@ -284,8 +284,8 @@ class Backtester(object):
         for date in dates:
             tmp_alpha = self.alpha.get_alpha(date)
             tmp_position = self.rule.cal_position(tmp_alpha)
-            tmp_dict = dict(zip(self.alpha.space,tmp_position))
-            tmp_df = pd.DataFrame(data=tmp_dict,index=[date])
+            tmp_dict = dict(zip(self.alpha.space, tmp_position))
+            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res = res.append(tmp_df)
 
         self.alpha.historic_alpha = res
