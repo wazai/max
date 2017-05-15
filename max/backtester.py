@@ -28,11 +28,11 @@ class Backtester(object):
 
         dates = self.alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
 
-        res = pd.DataFrame(columns=self.alpha.space)
+        res = pd.DataFrame(columns=self.alpha.universe)
         for date in dates:
             tmp_alpha = self.alpha.get_alpha(date)
             tmp_position = self.rule.cal_position(tmp_alpha)
-            tmp_dict = dict(zip(self.alpha.space, tmp_position))
+            tmp_dict = dict(zip(self.alpha.universe, tmp_position))
             tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res = res.append(tmp_df)
 

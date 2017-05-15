@@ -18,11 +18,11 @@ class Alpha(object):
     ------------------------------
     '''
 
-    def __init__(self, name, space, datacenter):
+    def __init__(self, name, universe, datacenter):
         logger.info('Initializing Alpha base class')
         # inputs
         self.__name__ = name
-        self.space = space
+        self.universe = universe
         self.datacenter = datacenter
         self.start_date = datacenter.start_date
         self.end_date = datacenter.end_date
@@ -38,8 +38,8 @@ class Alpha(object):
         # some historic data for backtesting and benchmarking
         self.benchmark = pd.Series()
         self.historic_position_return = pd.Series()
-        self.historic_mkt_return = pd.DataFrame(columns=self.space)
-        self.historic_position = pd.DataFrame(columns=self.space)
+        self.historic_mkt_return = pd.DataFrame(columns=self.universe)
+        self.historic_position = pd.DataFrame(columns=self.universe)
 
     def is_leaf(self):
         return len(self.children) == 0
@@ -48,7 +48,7 @@ class Alpha(object):
         self.children.append(child)
 
     def validate(self):
-        # assert(len(self.space)==len(self.alpha))
+        # assert(len(self.universe)==len(self.alpha))
         pass
 
     '''
@@ -87,7 +87,7 @@ class Alpha(object):
         days = 3
         start_date = date - dt.timedelta(days=days)
         dates = pd.date_range(str(start_date), periods=days)
-        mkt_data = pd.DataFrame(npr.randn(days, len(self.space)), index=dates, columns=self.space)
+        mkt_data = pd.DataFrame(npr.randn(days, len(self.universe)), index=dates, columns=self.universe)
 
         self.alpha = np.average(mkt_data, axis=0)
 
@@ -111,8 +111,8 @@ class Alpha(object):
         '''clean up all historic data. this should be used before backtest'''
         self.benchmark = pd.Series()
         self.historic_position_return = pd.Series()
-        self.historic_mkt_return = pd.DataFrame(columns=self.space)
-        self.historic_position= pd.DataFrame(columns=self.space)
+        self.historic_mkt_return = pd.DataFrame(columns=self.universe)
+        self.historic_position= pd.DataFrame(columns=self.universe)
         self.valid=0
 
     '''
@@ -129,8 +129,8 @@ class Alpha(object):
     def get_historic_mkt_return(self, start_date, end_date):
         '''get historic mkt return'''
         # dates = pd.date_range(str(start_date), str(end_date) )
-        # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.space))+0.5, index=dates)
-        self.historic_mkt_return = self.datacenter.load_codes_return(self.space, start_date, end_date)
+        # self.historic_mkt_return = pd.DataFrame(npr.randn(len(dates), len(self.universe))+0.5, index=dates)
+        self.historic_mkt_return = self.datacenter.load_codes_return(self.universe, start_date, end_date)
 
     def get_historic_position(self, start_date, end_date):
         '''
@@ -138,7 +138,7 @@ class Alpha(object):
         historic_position on the fly
         '''
         dates = self.datacenter.get_business_days_start_end(start_date, end_date)
-        self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.space)), columns=self.space, index=dates)
+        self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.universe)), columns=self.universe, index=dates)
 
     def get_historic_position_from_alpha(self):
         if not len(self.historic_position):
@@ -243,10 +243,10 @@ class Alpha(object):
 
         dates = pd.date_range(start_date, end_date)
 
-        res = pd.DataFrame(columns=self.space)
+        res = pd.DataFrame(columns=self.universe)
         for date in dates:
             tmp_alpha = self.get_alpha(date)
-            tmp_dict = dict(zip(self.space, tmp_alpha))
+            tmp_dict = dict(zip(self.universe, tmp_alpha))
             tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
             res.append(tmp_df)
 
@@ -257,43 +257,3 @@ class Alpha(object):
         self.metrics()
 
         self.clean_historic_data()
-
-
-class Rule(object):
-
-    def cal_position(self, alpha):
-        if not len(alpha):
-            return []
-
-        return [1 if x > 0 else -1 for x in alpha]
-
-
-class Backtester(object):
-
-    def __init__(self, alpha, rule):
-        self.alpha = alpha
-        self.rule = rule
-        self.start_date = alpha.start_date
-        self.end_date = alpha.end_date
-
-    def backtest(self):
-
-        logger.info('Running backtester ... ')
-
-        dates = self.alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
-
-        res = pd.DataFrame(columns=self.alpha.space)
-        for date in dates:
-            tmp_alpha = self.alpha.get_alpha(date)
-            tmp_position = self.rule.cal_position(tmp_alpha)
-            tmp_dict = dict(zip(self.alpha.space, tmp_position))
-            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
-            res = res.append(tmp_df)
-
-        self.alpha.historic_position = res
-        self.alpha.get_benchmark(self.start_date, self.end_date)
-        self.alpha.get_historic_position_return(self.start_date, self.end_date)
-        self.alpha.plot_return()
-        self.alpha.metrics()
-
-        self.alpha.clean_historic_data()

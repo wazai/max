@@ -32,7 +32,7 @@ a.plot_return()
 
 # backtest
 #a.backtest('2017-01-01','2017-02-01')
-rule = ap.Rule()
+rule = bt.Rule()
 backtest = bt.Backtester(a,rule)
 backtest.backtest()
 
