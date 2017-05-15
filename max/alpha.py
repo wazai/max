@@ -80,7 +80,7 @@ class Alpha(object):
         '''simple blend function, take the average'''
         return np.average(alphas, axis=0)
 
-    def cal(self, date=dt.date.today()):
+    def cal(self, date):
         '''Calculate alpha based on mkt data'''
         # for test only, will be override in derived nodes
 

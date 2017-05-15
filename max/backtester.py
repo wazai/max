@@ -2,11 +2,16 @@ import pandas as pd
 
 class Rule(object):
 
-    def cal_position(self, alpha, **k):
+    def cal_position(self, alpha):
         if not len(alpha):
             return []
 
         return [ 1 if x > 0 else -1 for x in alpha ]
+
+class RuleOpt(object):
+
+    def cal_position(self, alpha, opt, position):
+        pass
 
 class Backtester(object):
 
