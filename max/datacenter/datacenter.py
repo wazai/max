@@ -6,7 +6,6 @@ Load daily price cache, univ, risk etc
 
 import pandas as pd
 import os
-import datetime
 import logging
 
 from max.datacenter.datapath import DataPath
@@ -17,13 +16,14 @@ logger = logging.getLogger(__name__)
 
 class DataCenter(object):
 
-    def __init__(self, start_date='2010-01-01', end_date=datetime.date.today().strftime('%Y-%m-%d')):
+    def __init__(self, start_date, end_date, cov_model='ex_post_180'):
         logger.info('Initializing data center')
         dp = DataPath()
         self.paths = dp.path
         bday = BusinessDay()
         self.business_days = bday.get_business_days(bday_t='file')
         self._load_daily_price(start_date, end_date)
+        self._load_daily_covar(start_date, end_date, cov_model)
 
         if self.price.empty:
             self.start_date = ''
@@ -57,6 +57,30 @@ class DataCenter(object):
             pxcache = pd.concat(px_list)
             logger.info('Daily cache loaded')
         self.price = pxcache
+
+    @staticmethod
+    def _load_cov_append_date(i, file_names, bdays):
+        cov = pd.read_csv(file_names[i], dtype={'code': str})
+        cov.index = pd.to_datetime([bdays[i]] * cov.shape[0], format='%Y-%m-%d')
+        return cov
+
+    def _load_daily_covar(self, start_date, end_date, model='ex_post_180'):
+        logger.info('Loading %s covariance estimate from %s to %s', model, start_date, end_date)
+        covar_dir = os.path.join(self.paths['covariance'], model)
+        if not os.path.exists(covar_dir):
+            logger.error('Covar model %s cannot be found', model)
+        bdays = self.business_days[(self.business_days >= start_date) & (self.business_days <= end_date)]
+        bdays_list = bdays.tolist()
+        bdays_list = map(lambda x: x[:4] + x[5:7] + x[8:10], bdays_list)
+        file_names = [os.path.join(covar_dir, x[:4], x + '.csv') for x in bdays_list]
+        cov_list = [self._load_cov_append_date(i, file_names, bdays) for i in range(len(file_names))]
+        if not cov_list:
+            logger.warning('Empty covariance series')
+            covcache = pd.DataFrame()
+        else:
+            covcache = pd.concat(cov_list)
+            logger.info('Daily covariance loaded')
+        self.cov = covcache
 
     def load_codes_return(self, codes, start_date, end_date):
         if self.price.empty:
