@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.random as npr
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -8,7 +7,6 @@ from sklearn import linear_model
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 class Alpha(object):
     """Object that contains calibration of alpha and connection between alphas"""
@@ -40,6 +38,9 @@ class Alpha(object):
         self.historic_position_return = pd.Series()
         self.historic_mkt_return = pd.DataFrame(columns=self.universe)
         self.historic_position = pd.DataFrame(columns=self.universe)
+
+        # load historic mkt data from data center
+        self.get_historic_mkt_return(self.start_date,self.end_date)
 
     def is_leaf(self):
         return len(self.children) == 0
@@ -79,10 +80,11 @@ class Alpha(object):
         '''Calculate alpha based on mkt data'''
         # for test only, will be override in derived nodes
 
-        days = 5
+        days = 1
         start_date = date - dt.timedelta(days=days)
-        dates = pd.date_range(str(start_date), periods=days)
-        mkt_data = pd.DataFrame(npr.randn(days, len(self.universe)), index=dates, columns=self.universe)
+        end_date = date - dt.timedelta(days=1)
+        dates = self.datacenter.get_business_days_start_end(start_date,date)
+        mkt_data = self.historic_mkt_return[start_date:end_date]
 
         self.alpha = np.average(mkt_data, axis=0)
 
@@ -129,8 +131,7 @@ class Alpha(object):
         get historic alpha from storage, this is different from the backtester where we generate
         historic_position on the fly
         '''
-        dates = self.datacenter.get_business_days_start_end(start_date, end_date)
-        self.historic_position= pd.DataFrame(npr.randn(len(dates), len(self.universe)), columns=self.universe, index=dates)
+        pass
 
     '''
     ------------------------------
