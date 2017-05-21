@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 class Rule(object):
 
@@ -9,7 +10,7 @@ class Rule(object):
         if res == 0:
             return [0 for i in range(len(alpha))]
         else:
-            return res / sum(res)
+            return np.array(res) / sum(res)
 
 class RuleOpt(object):
 
