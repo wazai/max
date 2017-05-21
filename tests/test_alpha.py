@@ -10,8 +10,8 @@ codes = ['000001', '000002', '000009']
 a = ap.Alpha('a1', codes, d)
 b = ap.Alpha('a2', codes, d)
 c = ap.Alpha('a3', codes, d)
-d = ap.Alpha('a4', codes, d)
-e = ap.Alpha('a5', codes, d)
+d1 = ap.Alpha('a4', codes, d)
+
 
 # add connection
 a.add_child(b)

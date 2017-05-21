@@ -90,5 +90,13 @@ class DataCenter(object):
         pivot = df.pivot(values='return', columns='code')
         return pivot[start_date:end_date]
 
+    def load_codes_column(self, codes, column, start_date, end_date):
+        if self.price.empty:
+            return pd.DataFrame()
+        df = self.price[['code', column]]
+        df = df[df['code'].isin(codes)]
+        pivot = df.pivot(values=column, columns='code')
+        return pivot[start_date:end_date]
+
     def get_business_days_start_end(self, start_date, end_date):
         return self.price[start_date:end_date].index.unique()
