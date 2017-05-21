@@ -5,8 +5,11 @@ class Rule(object):
     def cal_position(self, alpha):
         if not len(alpha):
             return []
-
-        return [ 1 if x > 0 else 0 for x in alpha ]
+        res = [ 1 if x > 0 else 0 for x in alpha ]
+        if res == 0:
+            return [0 for i in range(len(alpha))]
+        else:
+            return res / sum(res)
 
 class RuleOpt(object):
 
