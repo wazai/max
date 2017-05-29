@@ -38,13 +38,13 @@ class BaseRule(object):
         pass
 
 
-class SimpleRule(BaseRule):
+class EqualWeightRule(BaseRule):
     """
-    Generate trade list based on a simple rule:
+    Generate trade list based on a equal weight rule:
     Assign equal weight to stocks with positive alpha, zero weight to stocks with negative alpha
     """
     def __init__(self):
-        super(SimpleRule, self).__init__(name='SimpleRule')
+        super(EqualWeightRule, self).__init__(name='EqualWeight')
 
     def generate_trade_list(self, position, alpha, covar=None):
         self.check_variable_length(position, alpha)
@@ -56,15 +56,15 @@ class SimpleRule(BaseRule):
         return position_after - position
 
 
-class PortOptRule(BaseRule):
+class MVORule(BaseRule):
     """
-    Generate trade list based on classic mean-variance portfolio optimization
+    Generate trade list based on Markowitz mean-variance optimization (MVO)
 
     @:param portopt: PortOpt object
     @:param optimize_method: string, simple_optimize or optimize
     """
     def __init__(self, portopt, optimize_method):
-        super(PortOptRule, self).__init__(name='PortOptRule')
+        super(MVORule, self).__init__(name='MVO')
         self.optimizer = portopt
         self.optimize_method = optimize_method
 
