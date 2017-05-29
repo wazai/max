@@ -1,6 +1,7 @@
 import logging
+import pandas as pd
 
-from max.alpha import Alpha
+# from max.alpha import Alpha
 from max.datacenter.datacenter import DataCenter
 from max.portfolio import Portfolio
 
@@ -12,11 +13,12 @@ dc = DataCenter(start_date, end_date)
 
 code = ['601818', '600000', '600028', 'some shit']
 share = [20, 50, 30, 100]
-p = Portfolio(code, share)
+p = Portfolio(code, share, dc)
 
 date = '2016-12-30'
 
-port_summary, missing_info = p.summary(date, dc)
-print(port_summary)
+port_summary, missing_info = p.summary(date)
+print(pd.DataFrame({'Metric': list(port_summary.keys()), 'Value': list(port_summary.values())}))
 print(missing_info)
+print(p.get_position(date))
 
