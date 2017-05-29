@@ -11,11 +11,11 @@ class Strategy(object):
     """Strategy class
     Strategy is a combination of alpha, risk, starting portfolio, rule and some options
 
-    :param rule: Rule object
-    :param alpha: Alpha object
-    :param port: Portfolio object, contains covariance matrix
-    :param name: string
-    :param option: dict, including rebalance frequency etc
+    @param rule: Rule object
+    @param alpha: Alpha object
+    @param port: Portfolio object, contains covariance matrix
+    @param name: string
+    @param option: dict, including rebalance frequency etc
     """
 
     def __init__(self, rule, alpha=None, port=None, name='NoOne', option=None):
@@ -23,5 +23,8 @@ class Strategy(object):
         self.rule = rule
         self.alpha = alpha
         self.port = port
+        if set(port.universe) != alpha.universe:
+            raise Exception('universe of alpha and portfolio does not match')
+        self.universe = port.universe
         self.name = name
         self.option = dict() if option is None else option
