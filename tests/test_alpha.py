@@ -1,9 +1,8 @@
 
 import max.alpha as ap
 import max.datacenter.datacenter as dc
-import max.backtester as bt
 
-dcd = dc.DataCenter('2017-01-01','2017-02-01')
+dcd = dc.DataCenter('2017-01-01', '2017-02-01')
 codes = ['000001', '000002', '000009']
 
 # create nodes
@@ -19,9 +18,4 @@ a.add_child(c)
 c.add_child(d)
 c.add_child(e)
 
-# backtest
-#a.backtest('2017-01-01','2017-02-01')
-rule = bt.Rule()
-backtest = bt.Backtester(a,rule)
-backtest.backtest()
-
+a.draw_graph()
