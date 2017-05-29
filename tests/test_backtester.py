@@ -3,7 +3,7 @@ import logging
 
 from max.alpha import Alpha
 from max.datacenter.datacenter import DataCenter
-from max.rule import SimpleRule
+import max.rule as rule
 from max.strategy import Strategy
 from max.backtester import Backtester
 from max.portfolio import Portfolio
@@ -25,7 +25,7 @@ ra = RandomAlpha('RandomAlpha', codes, dc)
 # backtest
 
 port = Portfolio(codes, [100, 200, 300, 200], dc)
-rule = SimpleRule()
+rule = rule.EqualWeightRule()
 strat = Strategy(rule, ra, port, 'test')
 bt = Backtester(strat, dc, start_date, end_date)
 bt.backtest()
