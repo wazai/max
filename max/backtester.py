@@ -1,4 +1,6 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import linear_model
 import logging
 
 logger = logging.getLogger(__name__)
@@ -7,25 +9,102 @@ logger = logging.getLogger(__name__)
 class Backtester(object):
     """Backtester class
 
-    :param strategy: Strategy object, to be backtested
-    :param dc: DataCenter object
-    :param start_date, end_date: string, backtest start and end date
+    @param strategy: Strategy object, to be backtested
+    @param dc: DataCenter object
+    @param start_date, end_date: string, backtest start and end date
     """
 
     def __init__(self, strategy, dc, start_date, end_date):
         logger.info('Creating backtester for strategy [%s] from %s to %s', strategy.name, start_date, end_date)
         self.strategy = strategy
+        self.universe = strategy.universe
         self.dc = dc
         self.start_date = start_date
         self.end_date = end_date
-        self.result = pd.DataFrame()
+        self.check_start_end_date()
+        self.return_ = dc.load_codes_return(self.universe, self.start_date, self.end_date)
+        self.position = pd.DataFrame()
+        self.benchmark_return = self.get_benchmark_return()
+        self.portfolio_return = pd.Series()
+
+    def check_start_end_date(self):
+        if self.start_date > self.end_date:
+            raise Exception('start date greater than end date')
+        dc_start_date = self.dc.start_date.strftime('%Y-%m-%d')
+        dc_end_date = self.dc.end_date.strftime('%Y-%m-%d')
+        if self.start_date > dc_end_date:
+            raise Exception('start date greater than datacenter end date')
+        if self.end_date < dc_start_date:
+            raise Exception('end date less than datacenter start date')
+        if self.start_date < dc_start_date:
+            logger.debug('data unavailable, change start date from %s to %s', self.start_date, dc_start_date)
+            self.start_date = dc_start_date
+        if self.end_date > dc_end_date:
+            logger.debug('data unavailable, change end date from %s to %s', self.end_date, dc_end_date)
+            self.end_date = dc_end_date
 
     def reset_start_end_date(self, start_date, end_date):
         self.start_date = start_date
         self.end_date = end_date
+        self.check_start_end_date()
+
+    def get_benchmark_return(self):
+        benchmark = self.strategy.option['benchmark']
+        return self.dc.load_codes_return([benchmark], self.start_date, self.end_date)[benchmark]
+
+    def get_portfolio_return(self):
+        return (self.position.shift(1) * self.return_).sum(axis=1)
+
+    def _check_return_exist(self):
+        if not len(self.portfolio_return):
+            raise Exception('portfolio return has not been computed')
+        if not len(self.benchmark_return):
+            raise Exception('benchmark return has not been computed')
+
+    def plot_return(self):
+        self._check_return_exist()
+        self.benchmark_return.cumsum().plot(style='b', legend=True)
+        plot = self.portfolio_return.cumsum().plot(style='g', legend=True)
+        plt.legend(['Benchmark', 'strategy '+self.strategy.name])
+        plot.set_ylabel('Return')
+        plt.show()
+
+    def clear(self):
+        # clean up all historic data. this should be used before backtest
+        self.benchmark_return = pd.Series()
+        self.portfolio_return = pd.Series()
+        self.benchmark_return = pd.DataFrame(columns=self.universe)
+        self.position = pd.DataFrame(columns=self.universe)
+    
+    def performance_metrics(self):
+        self._check_return_exist()
+
+        # simple sharp
+        sharpe_ratio = self.portfolio_return[1:].mean() / self.portfolio_return[1:].std()
+        active_return = self.portfolio_return[1:].mean() - self.benchmark_return.mean()
+        tracking_error = (self.portfolio_return[1:]-self.benchmark_return).std()
+        information_ratio = active_return / tracking_error
+
+        print('--------- Alpha Metrics --------')
+        print('Avg Daily Return: ', self.portfolio_return[1:].mean())
+        print('Daily Vol: ', self.portfolio_return[1:].std())
+        print('Sharpe Ratio: ', sharpe_ratio)
+        print('Information Ratio: ', information_ratio)
+
+        # simple alpha/beta
+        size = len(self.benchmark_return) - 1
+        x = self.portfolio_return[1:].values.reshape(size, 1)
+        y = self.benchmark_return[1:].values.reshape(size, 1)
+
+        reg = linear_model.LinearRegression()
+        reg.fit(x, y)
+        [[m_beta]] = reg.coef_
+        [m_alpha] = reg.intercept_
+
+        print('alpha: ', m_alpha)
+        print('beta:  ', m_beta)
 
     def backtest(self):
-
         logger.info('Running backtester from %s to %s', self.start_date, self.end_date)
 
         alpha = self.strategy.alpha
@@ -34,8 +113,9 @@ class Backtester(object):
 
         dates = alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
 
-        result = pd.DataFrame(columns=alpha.universe)
+        position = pd.DataFrame(columns=alpha.universe)
         for date in dates:
+            # TODO need to take into account rebalance frequency here
             alpha_value = alpha.get_alpha(date)
             position_before = port.get_position(date)
             covariance = port.get_covar(date)
@@ -43,11 +123,10 @@ class Backtester(object):
             position_after = position_before + position_trade
             position_dict = dict(zip(alpha.universe, position_after))
             position_df = pd.DataFrame(data=position_dict, index=[date])
-            result = result.append(position_df)
+            position = position.append(position_df)
 
-        self.result = result
-        alpha.historic_position = result
-        alpha.get_benchmark()
-        alpha.get_historic_position_return(self.start_date, self.end_date)
-        alpha.plot_return()
-        alpha.metrics()
+        self.position = position
+        self.portfolio_return = self.get_portfolio_return()
+
+        self.plot_return()
+        self.performance_metrics()
