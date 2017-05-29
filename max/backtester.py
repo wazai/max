@@ -1,49 +1,52 @@
 import pandas as pd
-import numpy as np
+import logging
 
-class Rule(object):
+logger = logging.getLogger(__name__)
 
-    def cal_position(self, alpha):
-        if not len(alpha):
-            return []
-        res = [ 1 if x > 0 else 0 for x in alpha ]
-        if res == 0:
-            return [0 for i in range(len(alpha))]
-        else:
-            return np.array(res) / sum(res)
-
-class RuleOpt(object):
-
-    def cal_position(self, alpha, opt, position):
-        pass
 
 class Backtester(object):
+    """Backtester class
 
-    def __init__(self, alpha, rule):
-        self.alpha = alpha
-        self.rule = rule
-        self.start_date = alpha.start_date
-        self.end_date = alpha.end_date
+    :param strategy: Strategy object, to be backtested
+    :param dc: DataCenter object
+    :param start_date, end_date: string, backtest start and end date
+    """
 
+    def __init__(self, strategy, dc, start_date, end_date):
+        logger.info('Creating backtester for strategy [%s] from %s to %s', strategy.name, start_date, end_date)
+        self.strategy = strategy
+        self.dc = dc
+        self.start_date = start_date
+        self.end_date = end_date
+        self.result = pd.DataFrame()
+
+    def reset_start_end_date(self, start_date, end_date):
+        self.start_date = start_date
+        self.end_date = end_date
 
     def backtest(self):
 
-        print('Running backtester ... ')
+        logger.info('Running backtester from %s to %s', self.start_date, self.end_date)
 
-        dates = self.alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
+        alpha = self.strategy.alpha
+        rule = self.strategy.rule
+        port = self.strategy.port
 
-        res = pd.DataFrame(columns=self.alpha.universe)
+        dates = alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
+
+        result = pd.DataFrame(columns=alpha.universe)
         for date in dates:
-            tmp_alpha = self.alpha.get_alpha(date)
-            tmp_position = self.rule.cal_position(tmp_alpha)
-            tmp_dict = dict(zip(self.alpha.universe, tmp_position))
-            tmp_df = pd.DataFrame(data=tmp_dict, index=[date])
-            res = res.append(tmp_df)
+            alpha_value = alpha.get_alpha(date)
+            position_before = port.get_position(date)
+            covariance = port.get_covar(date)
+            position_after = rule.generate_trade_list(alpha_value, covariance, position_before)
+            position_dict = dict(zip(alpha.universe, position_after))
+            position_df = pd.DataFrame(data=position_dict, index=[date])
+            result = result.append(position_df)
 
-        self.alpha.historic_position= res
-        self.alpha.get_benchmark(self.start_date, self.end_date)
-        self.alpha.get_historic_position_return(self.start_date, self.end_date)
-        self.alpha.plot_return()
-        self.alpha.metrics()
-
- #       self.alpha.clean_historic_data()
+        self.result = result
+        alpha.historic_position = result
+        alpha.get_benchmark()
+        alpha.get_historic_position_return(self.start_date, self.end_date)
+        alpha.plot_return()
+        alpha.metrics()
