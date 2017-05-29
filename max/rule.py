@@ -21,8 +21,13 @@ class BaseRule(object):
         logger.info('Creating rule [%s]', name)
         self.name = name
 
+    @staticmethod
+    def check_variable_length(position, alpha):
+        if len(position) != len(alpha):
+            raise Exception('Length of position and alpha does not match')
+
     @abstractmethod
-    def generate_trade_list(self, alpha, covar, position):
+    def generate_trade_list(self, position, alpha, covar):
         """
         Apply rule to (alpha, covar, port) to generate trade list
         :param alpha: array of shape = [n]
@@ -41,12 +46,14 @@ class SimpleRule(BaseRule):
     def __init__(self):
         super(SimpleRule, self).__init__(name='SimpleRule')
 
-    def generate_trade_list(self, alpha, covar=None, position=None):
+    def generate_trade_list(self, position, alpha, covar=None):
+        self.check_variable_length(position, alpha)
         weight = [1 if x > 0 else 0 for x in alpha]
         if len(alpha) == 0 or np.sum(weight) == 0:
-            return np.array([0] * len(alpha))
+            position_after = np.array([0] * len(alpha))
         else:
-            return np.array(weight) / np.sum(weight)
+            position_after = np.array(weight) / np.sum(weight)
+        return position_after - position
 
 
 class PortOptRule(BaseRule):
@@ -61,6 +68,6 @@ class PortOptRule(BaseRule):
         self.optimizer = portopt
         self.optimize_method = optimize_method
 
-    def generate_trade_list(self, alpha, covar, position):
+    def generate_trade_list(self, position, alpha, covar):
         # TODO Apply portfolio optimizer based on alpha, risk and existing portfolio
         pass

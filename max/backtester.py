@@ -39,7 +39,8 @@ class Backtester(object):
             alpha_value = alpha.get_alpha(date)
             position_before = port.get_position(date)
             covariance = port.get_covar(date)
-            position_after = rule.generate_trade_list(alpha_value, covariance, position_before)
+            position_trade = rule.generate_trade_list(position_before, alpha_value, covariance)
+            position_after = position_before + position_trade
             position_dict = dict(zip(alpha.universe, position_after))
             position_df = pd.DataFrame(data=position_dict, index=[date])
             result = result.append(position_df)
