@@ -30,10 +30,10 @@ class BaseRule(object):
     def generate_trade_list(self, position, alpha, covar):
         """
         Apply rule to (alpha, covar, port) to generate trade list
-        :param alpha: array of shape = [n]
-        :param covar: array of shape = [n, n]
-        :param position: array of shape = [n], current position in yuan
-        :return: array of shape = [n], trade list
+        @param alpha: array of shape = [n]
+        @param covar: array of shape = [n, n]
+        @param position: array of shape = [n], current position in yuan
+        @return: array of shape = [n], trade list
         """
         pass
 
@@ -60,8 +60,8 @@ class MVORule(BaseRule):
     """
     Generate trade list based on Markowitz mean-variance optimization (MVO)
 
-    @:param portopt: PortOpt object
-    @:param optimize_method: string, simple_optimize or optimize
+    @param portopt: PortOpt object
+    @param optimize_method: string, simple_optimize or optimize
     """
     def __init__(self, portopt, optimize_method):
         super(MVORule, self).__init__(name='MVO')

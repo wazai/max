@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 
 class Portfolio(object):
     """ Portfolio class
+    Portfolio does not know date information, it only has the code and quantity.
+    To get the position/risk date needs to be given.
 
-    Members
-    :param code: array-like of shape = [n], stocks in the portfolio
-    :param share: array-like of shape = [n], quantities of corresponding stocks
-    :param dc: DataCenter object, used to get price and covariance data
+    @param code: array-like of shape = [n], stocks in the portfolio
+    @param share: array-like of shape = [n], quantities of corresponding stocks
+    @param dc: DataCenter object, used to get price and covariance data
     """
 
     def __init__(self, code, share, dc):
