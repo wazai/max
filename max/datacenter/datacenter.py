@@ -36,8 +36,9 @@ class DataCenter(object):
 
         self.univ_dict = dict()
         univ_file_names = os.listdir(self.paths['univ'])
+        logger.info('Loading univ files')
         for fn in univ_file_names:
-            logger.info('Load univ file %s', fn)
+            logger.debug('Loading univ file %s', fn)
             self.univ_dict[fn[:-4]] = pd.read_csv(os.path.join(self.paths['univ'], fn), dtype={'code': str})
         logger.info('Finish initializing data center')
     
