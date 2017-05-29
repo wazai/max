@@ -1,7 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn import linear_model
 import logging
+
+from max.performance import Performance
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class Backtester(object):
         self.position = pd.DataFrame()
         self.benchmark_return = self.get_benchmark_return()
         self.portfolio_return = pd.Series()
+        self.performance = None
 
     def check_start_end_date(self):
         if self.start_date > self.end_date:
@@ -75,34 +77,6 @@ class Backtester(object):
         self.portfolio_return = pd.Series()
         self.benchmark_return = pd.DataFrame(columns=self.universe)
         self.position = pd.DataFrame(columns=self.universe)
-    
-    def performance_metrics(self):
-        self._check_return_exist()
-
-        # simple sharp
-        sharpe_ratio = self.portfolio_return[1:].mean() / self.portfolio_return[1:].std()
-        active_return = self.portfolio_return[1:].mean() - self.benchmark_return.mean()
-        tracking_error = (self.portfolio_return[1:]-self.benchmark_return).std()
-        information_ratio = active_return / tracking_error
-
-        print('--------- Alpha Metrics --------')
-        print('Avg Daily Return: ', self.portfolio_return[1:].mean())
-        print('Daily Vol: ', self.portfolio_return[1:].std())
-        print('Sharpe Ratio: ', sharpe_ratio)
-        print('Information Ratio: ', information_ratio)
-
-        # simple alpha/beta
-        size = len(self.benchmark_return) - 1
-        x = self.portfolio_return[1:].values.reshape(size, 1)
-        y = self.benchmark_return[1:].values.reshape(size, 1)
-
-        reg = linear_model.LinearRegression()
-        reg.fit(x, y)
-        [[m_beta]] = reg.coef_
-        [m_alpha] = reg.intercept_
-
-        print('alpha: ', m_alpha)
-        print('beta:  ', m_beta)
 
     def backtest(self):
         logger.info('Running backtester from %s to %s', self.start_date, self.end_date)
@@ -129,4 +103,5 @@ class Backtester(object):
         self.portfolio_return = self.get_portfolio_return()
 
         self.plot_return()
-        self.performance_metrics()
+        self.performance = Performance(self.portfolio_return[1:], self.benchmark_return[1:])
+        self.performance.show_metrics()
