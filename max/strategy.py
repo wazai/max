@@ -23,7 +23,7 @@ class Strategy(object):
         self.rule = rule
         self.alpha = alpha
         self.port = port
-        if set(port.universe) != alpha.universe:
+        if set(port.universe) != set(alpha.universe):
             raise Exception('universe of alpha and portfolio does not match')
         self.universe = port.universe
         self.name = name
