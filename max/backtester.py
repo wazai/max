@@ -1,5 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import logging
 
 from max.performance import Performance
@@ -10,9 +9,14 @@ logger = logging.getLogger(__name__)
 class Backtester(object):
     """Backtester class
 
-    @param strategy: Strategy object, to be backtested
-    @param dc: DataCenter object
-    @param start_date, end_date: string, backtest start and end date
+    @member strategy: Strategy object, to be backtested
+    @member dc: DataCenter object
+    @member start_date, end_date: string, backtest start and end date
+    @member return_: DataFrame of shape = [T, n], daily return of each stock
+    @member position: DataFrame of shape = [T, n], daily holding of each stock
+    @member benchmark_return: pd series of shape = [n], daily benchmark return
+    @member portfolio_return: pd series of shape = [n], daily portfolio return
+    @member performance: Performance object, to evaluate the strategy performance
     """
 
     def __init__(self, strategy, dc, start_date, end_date):
@@ -27,7 +31,7 @@ class Backtester(object):
         self.position = pd.DataFrame()
         self.benchmark_return = self.get_benchmark_return()
         self.portfolio_return = pd.Series()
-        self.performance = None
+        self.performance = Performance(strategy.name)
 
     def check_start_end_date(self):
         if self.start_date > self.end_date:
@@ -57,20 +61,6 @@ class Backtester(object):
     def get_portfolio_return(self):
         return (self.position.shift(1) * self.return_).sum(axis=1)
 
-    def _check_return_exist(self):
-        if not len(self.portfolio_return):
-            raise Exception('portfolio return has not been computed')
-        if not len(self.benchmark_return):
-            raise Exception('benchmark return has not been computed')
-
-    def plot_return(self):
-        self._check_return_exist()
-        self.benchmark_return.cumsum().plot(style='b', legend=True)
-        plot = self.portfolio_return.cumsum().plot(style='g', legend=True)
-        plt.legend(['Benchmark', 'strategy '+self.strategy.name])
-        plot.set_ylabel('Return')
-        plt.show()
-
     def clear(self):
         # clean up all historic data. this should be used before backtest
         self.benchmark_return = pd.Series()
@@ -85,9 +75,8 @@ class Backtester(object):
         rule = self.strategy.rule
         port = self.strategy.port
 
-        dates = alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
-
         position = pd.DataFrame(columns=alpha.universe)
+        dates = alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
         for date in dates:
             # TODO need to take into account rebalance frequency here
             alpha_value = alpha.get_alpha(date)
@@ -102,6 +91,6 @@ class Backtester(object):
         self.position = position
         self.portfolio_return = self.get_portfolio_return()
 
-        self.plot_return()
-        self.performance = Performance(self.portfolio_return[1:], self.benchmark_return[1:])
+        self.performance.set_return_series(self.portfolio_return[1:], self.benchmark_return[1:])
+        self.performance.plot_return()
         self.performance.show_metrics()
