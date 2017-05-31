@@ -71,7 +71,7 @@ class Portfolio(object):
 
     def get_position(self, date):
         px, _ = self.get_price(date)
-        position = px['close']*np.abs(px['share'])
+        position = px['close']*px['share']
         return position.values
 
     def summary(self, date):
