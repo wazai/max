@@ -5,25 +5,40 @@ Contains all performance related analysis: measurement, attribution etc
 """
 
 import logging
+import pandas as pd
 from sklearn import linear_model
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
+
 
 class Performance(object):
     """Performance
 
-    @param object_return: pandas series, could be single stock return, portfolio return, alpha factor return etc
-    @param benchmark_return: pandas series, benchmark return
+    @member object_return: pandas series, could be single stock return, portfolio return, alpha factor return etc
+    @member benchmark_return: pandas series, benchmark return
+    @member metrics, dict, performance measurement including sharpe ratio, IR, alpha, beta etc
     """
 
-    def __init__(self, object_return, benchmark_return):
+    def __init__(self, object_name='target'):
+        self.name = object_name
+        self.object_return = pd.Series()
+        self.benchmark_return = pd.Series()
+        self.metrics = dict()
+
+    def set_return_series(self, object_return, benchmark_return):
         if len(object_return) != len(benchmark_return):
             raise Exception('length of object return and benchmark return does not match')
         if not object_return.index.equals(benchmark_return.index):
             logger.warning('object return and benchmark return have different index date')
         self.object_return = object_return
         self.benchmark_return = benchmark_return
-        self.metrics = dict()
+
+    def _check_return_exist(self):
+        if not len(self.object_return):
+            raise Exception('object return has not been set')
+        if not len(self.benchmark_return):
+            raise Exception('benchmark return has not been set')
 
     def get_metrics(self):
         sharpe_ratio = self.object_return.mean() / self.object_return.std()
@@ -55,3 +70,11 @@ class Performance(object):
         print('Information Ratio: ', self.metrics['information ratio'])
         print('alpha: ', self.metrics['alpha'])
         print('beta:  ', self.metrics['beta'])
+
+    def plot_return(self):
+        self._check_return_exist()
+        self.benchmark_return.cumsum().plot(style='b', legend=True)
+        plot = self.object_return.cumsum().plot(style='g', legend=True)
+        plt.legend(['Benchmark', 'strategy '+self.name])
+        plot.set_ylabel('Return')
+        plt.show()
