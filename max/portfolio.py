@@ -24,6 +24,9 @@ class Portfolio(object):
         logger.info('Creating portfolio with %i stocks in the universe', len(code))
         if len(code) != len(share):
             logger.error('Number of stocks and shares does not match')
+        if 'cash' not in code:
+            code.append('cash')
+            share.append(0.0)
         self.universe = np.array(code)
         self.share = np.array(share)
         self.df = pd.DataFrame({'code': code, 'share': share})
