@@ -22,7 +22,9 @@ class DataCenter(object):
         self.paths = dp.path
         bday = BusinessDay()
         self.business_days = bday.get_business_days(bday_t='file')
+        self.price = pd.DataFrame()
         self._load_daily_price(start_date, end_date)
+        self.cov = pd.DataFrame()
         self._load_daily_covar(start_date, end_date, cov_model)
 
         if self.price.empty:
@@ -56,7 +58,7 @@ class DataCenter(object):
             pxcache = pd.DataFrame()
         else:
             pxcache = pd.concat(px_list)
-            logger.info('Daily cache loaded')
+            logger.debug('Daily cache loaded')
         self.price = pxcache
 
     @staticmethod
@@ -80,7 +82,7 @@ class DataCenter(object):
             covcache = pd.DataFrame()
         else:
             covcache = pd.concat(cov_list)
-            logger.info('Daily covariance loaded')
+            logger.debug('Daily covariance loaded')
         self.cov = covcache
 
     def load_codes_return(self, codes, start_date, end_date):
@@ -101,3 +103,20 @@ class DataCenter(object):
 
     def get_business_days_start_end(self, start_date, end_date):
         return self.price[start_date:end_date].index.unique()
+
+    def get_covar(self, date):
+        """
+        Get the covariance on a particular date, indexing by code
+        """
+        logger.debug('Getting covariance on %s', date)
+        cov = self.cov.loc[date]
+        cov = cov.set_index('code')
+        return cov
+
+    def get_price(self, date):
+        """
+        Get price on a particular date
+        """
+        logger.debug('Getting price on %s', date)
+        px = self.price.loc[date]
+        return px
