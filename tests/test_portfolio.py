@@ -10,15 +10,28 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(name)27s  %(level
 start_date = '2015-01-01'
 end_date = '2016-12-31'
 dc = DataCenter(start_date, end_date)
+date = '2016-12-30'
+
+# portfolio with missing code
+# ----------------------------
 
 code = ['601818', '600000', '600028', 'some shit']
 share = [20, 50, 30, 100]
-p = Portfolio(code, share, dc)
+p = Portfolio(code, share)
 
-date = '2016-12-30'
-
-port_summary, missing_info = p.summary(date)
+port_summary, missing_info = p.summary(date, dc)
 print(pd.DataFrame({'Metric': list(port_summary.keys()), 'Value': list(port_summary.values())}))
 print(missing_info)
-print(p.get_position(date))
+print(p.get_position(date, dc))
 
+# portfolio with cash
+# --------------------
+
+code = ['601818', '600000', '600028', 'some shit', 'cash']
+share = [20, 50, 30, 100, 10000]
+p = Portfolio(code, share)
+
+port_summary, missing_info = p.summary(date, dc)
+print(pd.DataFrame({'Metric': list(port_summary.keys()), 'Value': list(port_summary.values())}))
+print(missing_info)
+print(p.get_position(date, dc))
