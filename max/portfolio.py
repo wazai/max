@@ -16,8 +16,11 @@ class Portfolio(object):
     Portfolio does not know date information, it only has the code and quantity.
     To get the position/risk date needs to be given.
 
-    @param code: array-like of shape = [n], stocks in the portfolio
-    @param share: array-like of shape = [n], quantities of corresponding stocks
+    @member code: array-like of shape = [n], stocks in the portfolio
+    @member share: array-like of shape = [n], quantities of corresponding stocks
+    @member df: DataFrame of shape [n, 2] with columns code and share
+    @member date: current date
+    @member price: current price data
     """
 
     def __init__(self, code, share):
@@ -30,7 +33,12 @@ class Portfolio(object):
         self.universe = np.array(code)
         self.share = np.array(share)
         self.df = pd.DataFrame({'code': code, 'share': share})
+        self.date = ''
+        self.px = pd.DataFrame()
         logger.debug('Portfolio created')
+
+    # portfolio info
+    # --------------
 
     def get_covar(self, date, dc):
         cov = dc.get_covar(date).copy()
@@ -39,6 +47,52 @@ class Portfolio(object):
         missing['type'] = 'covariance'
         cov = cov.loc[self.universe, self.universe]
         return cov, missing
+
+    def get_price(self, date, dc=None):
+        if self.date == date and not self.px.empty:
+            px = self.px
+        else:
+            px = dc.get_price(date)
+            px = px[px['code'].isin(self.universe)]
+            px = px.reset_index()[['code', 'close']]
+            px.loc[px.shape[0]] = ['cash', 1.0]
+            self.date = date
+            self.px = px
+        missing = self.df[~self.df['code'].isin(px['code'])].copy()
+        missing.reset_index(inplace=True)
+        missing['type'] = 'price'
+        px = pd.merge(self.df, px, on='code', how='left')
+        px = px.set_index('code')
+        return px, missing
+
+    def get_position(self, date, dc):
+        px, _ = self.get_price(date, dc)
+        position = px['close'] * px['share']
+        return position.values
+
+    def get_share(self, position, date=None, dc=None):
+        px, _ = self.get_price(date, dc)
+        share = position / px['close'].values
+        return share
+
+    def get_alpha(self, date, alpha):
+        alpha_values = alpha.get_alpha(date)
+        alpha_df = pd.DataFrame({'code': alpha.universe, 'alpha': alpha_values})
+        alpha_df.set_index('code', inplace=True)
+        if 'cash' in alpha_df.index:
+            if alpha_df.loc['cash'].values.item() != 0:
+                logger.warning('Alpha of cash is not zero, set it to zero')
+                alpha_df.loc['cash'] = 0.0
+        else:
+            alpha_df.loc['cash'] = 0.0
+        return alpha_df.loc[self.universe].values
+
+    def get_port_return(self, start_date, end_date):
+        # TODO compute portfolio return for a time period
+        pass
+
+    # portfolio analytics
+    # -------------------
 
     def get_port_risk(self, date, dc):
         cov, missing_cov = self.get_covar(date, dc)
@@ -51,22 +105,6 @@ class Portfolio(object):
         sigma = np.nan_to_num(sigma)
         risk = w.dot(sigma).dot(w)
         return risk, missing
-
-    def get_price(self, date, dc):
-        px = dc.get_price(date)
-        px = px.reset_index()[['code', 'close']]
-        px.loc[px.shape[0]] = ['cash', 1.0]
-        missing = self.df[~self.df['code'].isin(px['code'])].copy()
-        missing.reset_index(inplace=True)
-        missing['type'] = 'price'
-        px = pd.merge(self.df, px, on='code', how='left')
-        px = px.set_index('code')
-        return px, missing
-
-    def get_position(self, date, dc):
-        px, _ = self.get_price(date, dc)
-        position = px['close']*px['share']
-        return position.values
 
     def summary(self, date, dc):
         stats = dict()
@@ -88,10 +126,10 @@ class Portfolio(object):
 
         return stats, missing
 
-    def get_port_return(self, start_date, end_date):
-        # TODO compute portfolio return for a time period
-        pass
+    # portfolio rebalance
+    # -------------------
 
-    def get_alpha(self, date, alpha):
-        # TODO get alpha of stocks in the portfolio
-        pass
+    def trade(self, share_trade):
+        share_trade = np.nan_to_num(share_trade)
+        self.share = self.share + share_trade
+        self.df['share'] = self.share
