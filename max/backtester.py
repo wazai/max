@@ -59,7 +59,7 @@ class Backtester(object):
         return self.dc.load_codes_return([benchmark], self.start_date, self.end_date)[benchmark]
 
     def get_portfolio_return(self):
-        return (self.position.shift(1) * self.return_).sum(axis=1)
+        return (self.position.shift(1)*self.return_).sum(axis=1) / self.position.shift(1).sum(axis=1)
 
     def clear(self):
         # clean up all historic data. this should be used before backtest
@@ -76,13 +76,16 @@ class Backtester(object):
         port = self.strategy.port
 
         position = pd.DataFrame(columns=alpha.universe)
-        dates = alpha.datacenter.get_business_days_start_end(self.start_date, self.end_date)
+        dates = self.dc.get_business_days_start_end(self.start_date, self.end_date)
         for date in dates:
             # TODO need to take into account rebalance frequency here
-            alpha_value = alpha.get_alpha(date)
-            position_before = port.get_position(date)
-            covariance = port.get_covar(date)
-            position_trade = rule.generate_trade_list(position_before, alpha_value, covariance)
+            logger.debug('Trading on %s', date.strftime('%Y-%m-%d'))
+            alpha_value = port.get_alpha(date, alpha)
+            position_before = port.get_position(date, self.dc)
+            cov, cov_missing = port.get_covar(date, self.dc)
+            position_trade = rule.generate_trade_list(position_before, alpha_value, cov)
+            share_trade = port.get_share(position_trade, date, self.dc)
+            port.trade(share_trade)
             position_after = position_before + position_trade
             position_dict = dict(zip(alpha.universe, position_after))
             position_df = pd.DataFrame(data=position_dict, index=[date])
