@@ -22,15 +22,17 @@ class BaseRule(object):
         self.name = name
 
     @staticmethod
-    def check_variable_length(position, alpha):
-        if len(position) != len(alpha):
-            raise Exception('Length of position and alpha does not match')
+    def check_variable_length(position, alpha_value):
+        if len(position) == 0:
+            raise Exception('Empty position list')
+        if len(position) != len(alpha_value):
+            raise Exception('Length of position and alpha_value does not match')
 
     @abstractmethod
-    def generate_trade_list(self, position, alpha, covar):
+    def generate_trade_list(self, position, alpha_value, covar):
         """
         Apply rule to (alpha, covar, port) to generate trade list
-        @param alpha: array of shape = [n]
+        @param alpha_value: array of shape = [n]
         @param covar: array of shape = [n, n]
         @param position: array of shape = [n], current position in yuan
         @return: array of shape = [n], trade list
@@ -40,19 +42,19 @@ class BaseRule(object):
 
 class EqualWeightRule(BaseRule):
     """
-    Generate trade list based on a equal weight rule:
+    Generate trade list based on a simple equal weight rule:
     Assign equal weight to stocks with positive alpha, zero weight to stocks with negative alpha
     """
     def __init__(self):
         super(EqualWeightRule, self).__init__(name='EqualWeight')
 
-    def generate_trade_list(self, position, alpha, covar=None):
-        self.check_variable_length(position, alpha)
-        weight = [1 if x > 0 else 0 for x in alpha]
-        if len(alpha) == 0 or np.sum(weight) == 0:
-            position_after = np.array([0] * len(alpha))
-        else:
-            position_after = np.array(weight) / np.sum(weight)
+    def generate_trade_list(self, position, alpha_value, covar=None):
+        self.check_variable_length(position, alpha_value)
+        alpha_value[np.isnan(position)] = np.nan
+        weight = [1 if x > 0 else 0 for x in alpha_value]
+        if np.sum(weight) == 0:
+            weight[np.nanargmax(alpha_value)] = 1.0
+        position_after = np.array(weight) / np.nansum(weight) * np.nansum(position)
         return position_after - position
 
 
@@ -68,6 +70,6 @@ class MVORule(BaseRule):
         self.optimizer = portopt
         self.optimize_method = optimize_method
 
-    def generate_trade_list(self, position, alpha, covar):
-        # TODO Apply portfolio optimizer based on alpha, risk and existing portfolio
+    def generate_trade_list(self, position, alpha_value, covar):
+        # TODO Apply portfolio optimizer based on alpha_value, risk and existing portfolio
         pass
